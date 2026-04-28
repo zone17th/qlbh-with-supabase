@@ -44,6 +44,7 @@ export interface InventoryExportForm {
 
 export interface OrderForm {
   id?: number;
+  orderCode?: string;
   orderType: OrderType;
   customerName: string;
   customerAddress: string;

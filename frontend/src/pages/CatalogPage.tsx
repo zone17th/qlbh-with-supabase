@@ -21,6 +21,7 @@ export function CatalogPage() {
   const [tab, setTab] = useState<"PRODUCT" | "CATEGORY">("PRODUCT");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<ProductCategory[]>([]);
   const [productPage, setProductPage] = useState(0);
   const [categoryPage, setCategoryPage] = useState(0);
   const [productTotalPages, setProductTotalPages] = useState(0);
@@ -28,32 +29,63 @@ export function CatalogPage() {
   const [productForm, setProductForm] = useState<ProductForm>(emptyProduct);
   const [categoryForm, setCategoryForm] = useState<CategoryForm>(emptyCategory);
   const [keyword, setKeyword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [filterCategoryId, setFilterCategoryId] = useState(0);
+  const [loading, setLoading] = useState(false); // For forms
+  const [productLoading, setProductLoading] = useState(false);
+  const [categoryLoading, setCategoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
-    setLoading(true);
+  async function loadCategoryOptions() {
+    try {
+      const result = await catalogService.categories({ page: 0, size: 500 });
+      setCategoryOptions(result.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function loadProducts(reset = false) {
+    setProductLoading(true);
     setError(null);
     try {
-      const [productResult, categoryResult, categoryOptions] = await Promise.all([
-        catalogService.products({ page: productPage, size: 20, name: keyword }),
-        catalogService.categories({ page: categoryPage, size: 20, keyword }),
-        catalogService.categories({ page: 0, size: 500 }),
-      ]);
-      setProducts(productResult.items);
-      setProductTotalPages(productResult.totalPages);
-      setCategories(categoryOptions.items);
-      setCategoryTotalPages(categoryResult.totalPages);
+      const result = await catalogService.products({ 
+        page: reset ? 0 : productPage, 
+        size: 20, 
+        name: reset ? "" : keyword, 
+        categoryId: reset ? undefined : (filterCategoryId || undefined) 
+      });
+      setProducts(result.items);
+      setProductTotalPages(result.totalPages);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setLoading(false);
+      setProductLoading(false);
+    }
+  }
+
+  async function loadCategories() {
+    setCategoryLoading(true);
+    setError(null);
+    try {
+      const result = await catalogService.categories({ page: categoryPage, size: 20 });
+      setCategories(result.items);
+      setCategoryTotalPages(result.totalPages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setCategoryLoading(false);
     }
   }
 
   useEffect(() => {
-    void load();
-  }, [productPage, categoryPage]);
+    void loadCategoryOptions();
+  }, []);
+
+  useEffect(() => {
+    if (tab === "PRODUCT") void loadProducts();
+    else void loadCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productPage, categoryPage, tab]);
 
   function validateProduct() {
     return firstError([
@@ -75,7 +107,7 @@ export function CatalogPage() {
       if (productForm.id) await catalogService.updateProduct(productForm);
       else await catalogService.createProduct(productForm);
       setProductForm(emptyProduct);
-      await load();
+      void loadProducts();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -92,7 +124,8 @@ export function CatalogPage() {
       if (categoryForm.id) await catalogService.updateCategory(categoryForm);
       else await catalogService.createCategory(categoryForm);
       setCategoryForm(emptyCategory);
-      await load();
+      void loadCategories();
+      void loadCategoryOptions();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -121,7 +154,7 @@ export function CatalogPage() {
     if (!window.confirm("Xóa sản phẩm này?")) return;
     try {
       await catalogService.deleteProduct(id);
-      await load();
+      void loadProducts();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -131,113 +164,385 @@ export function CatalogPage() {
     if (!window.confirm("Xóa danh mục này?")) return;
     try {
       await catalogService.deleteCategory(id);
-      await load();
+      void loadCategories();
+      void loadCategoryOptions();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
   }
 
   return (
-    <>
-      <div className="page-header">
-        <div>
-          <h1>Sản phẩm</h1>
-          <p>Danh mục, sản phẩm và phân loại sản phẩm.</p>
-        </div>
-        <div className="toolbar">
-          <label className="field">
-            <span>Tìm kiếm</span>
-            <input value={keyword} onChange={(event) => setKeyword(event.target.value)} onKeyDown={(event) => event.key === "Enter" && void load()} />
-          </label>
-          <button className="secondary" onClick={() => void load()}>Tìm</button>
-        </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Quản lý Sản phẩm & Danh mục</h1>
+        <p className="text-gray-600 mt-2">Quản lý danh mục sản phẩm, thông tin sản phẩm và phân loại</p>
       </div>
 
-      <div className="tabs">
-        <button className={tab === "PRODUCT" ? "active" : ""} onClick={() => setTab("PRODUCT")}>Sản phẩm</button>
-        <button className={tab === "CATEGORY" ? "active" : ""} onClick={() => setTab("CATEGORY")}>Danh mục</button>
-      </div>
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
+      )}
 
-      <DataState loading={loading} error={error} empty={false}>
-        {tab === "PRODUCT" ? (
-          <div className="grid two">
-            <section className="form-panel">
-              <h2>{productForm.id ? "Cập nhật sản phẩm" : "Tạo sản phẩm"}</h2>
-              <div className="form-grid">
-                <label className="field"><span>Tên</span><input value={productForm.name} onChange={(event) => setProductForm({ ...productForm, name: event.target.value })} /></label>
-                <label className="field"><span>Danh mục</span><select value={productForm.categoryId} onChange={(event) => setProductForm({ ...productForm, categoryId: Number(event.target.value) })}><option value={0}>Chọn danh mục</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-                <label className="field"><span>Bảo hành</span><input type="number" min={1} value={productForm.warrantyMonths} onChange={(event) => setProductForm({ ...productForm, warrantyMonths: Number(event.target.value) })} /></label>
-                <label className="field full"><span>Ghi chú</span><textarea value={productForm.note} onChange={(event) => setProductForm({ ...productForm, note: event.target.value })} /></label>
-              </div>
-              <div className="inline-list">
-                <strong>Phân loại</strong>
-                {productForm.variants.map((variant, index) => (
-                  <div className="inline-row" key={index}>
-                    <input value={variant.variantName} onChange={(event) => {
-                      const next = [...productForm.variants];
-                      next[index] = { ...variant, variantName: event.target.value };
-                      setProductForm({ ...productForm, variants: next });
-                    }} />
-                    <button className="ghost" onClick={() => setProductForm({ ...productForm, variants: productForm.variants.filter((_, i) => i !== index) })}><Trash2 size={16} /></button>
+      {/* Tabs Card */}
+      <div className="bg-white rounded-2xl shadow-soft-md border border-gray-100 overflow-hidden">
+        {/* Segmented Tabs */}
+        <div className="flex p-1.5 bg-gray-100/50 m-4 rounded-xl border border-gray-200/50">
+          <button
+            type="button"
+            onClick={() => setTab("PRODUCT")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-bold rounded-lg transition-all focus:outline-none ${
+              tab === "PRODUCT"
+                ? "bg-white shadow-soft-sm text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <span className="text-lg">📦</span> Sản phẩm
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("CATEGORY")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-bold rounded-lg transition-all focus:outline-none ${
+              tab === "CATEGORY"
+                ? "bg-white shadow-soft-sm text-blue-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <span className="text-lg">🏷️</span> Danh mục
+          </button>
+        </div>
+
+        <div className="p-6 pt-2">
+            {tab === "PRODUCT" ? (
+              <div className="space-y-8">
+                {/* Product Form Section */}
+                <div className="bg-white rounded-lg shadow-soft-md p-6 mb-6">
+                  <div className="mb-6 pb-4 border-b border-gray-200">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {productForm.id ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}
+                    </h2>
+                    <p className="text-gray-600 text-sm mt-1">Quản lý thông tin và các phiên bản sản phẩm</p>
                   </div>
-                ))}
-                <button className="secondary" onClick={() => setProductForm({ ...productForm, variants: [...productForm.variants, { variantName: "" }] })}><Plus size={16} /> Thêm phân loại</button>
-              </div>
-              <div className="toolbar">
-                <button className="primary" onClick={() => void submitProduct()}><Save size={16} /> Lưu</button>
-                <button className="ghost" onClick={() => setProductForm(emptyProduct)}>Làm mới</button>
-              </div>
-            </section>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-2 required-label">Tên sản phẩm</label>
+                        <input
+                          type="text"
+                          value={productForm.name}
+                          onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                          placeholder="Nhập tên sản phẩm"
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px]"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-2 required-label">Danh mục</label>
+                        <select
+                          value={productForm.categoryId}
+                          onChange={(e) => setProductForm({ ...productForm, categoryId: Number(e.target.value) })}
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px]"
+                        >
+                          <option value={0}>Chọn danh mục</option>
+                          {categoryOptions.map((cat) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-2 required-label">Bảo hành (tháng)</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={productForm.warrantyMonths}
+                          onChange={(e) => setProductForm({ ...productForm, warrantyMonths: Number(e.target.value) })}
+                          placeholder="Số tháng bảo hành"
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px]"
+                        />
+                      </div>
+                    </div>
 
-            <section className="section">
-              <div className="table-wrap">
-                <table>
-                  <thead><tr><th>ID</th><th>Tên</th><th>Danh mục</th><th>Phân loại</th><th></th></tr></thead>
-                  <tbody>
-                    {products.map((product) => (
-                      <tr key={product.id}>
-                        <td>{product.id}</td>
-                        <td>{product.name}</td>
-                        <td>{product.categoryName}</td>
-                        <td>{product.variants.map((variant) => variant.variantName).join(", ")}</td>
-                        <td><div className="row-actions"><button className="secondary" onClick={() => editProduct(product)}>Sửa</button><button className="danger" onClick={() => void removeProduct(product.id)}>Xóa</button></div></td>
+                    <div className="flex flex-col">
+                      <label className="text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
+                      <input
+                        type="text"
+                        value={productForm.note}
+                        onChange={(e) => setProductForm({ ...productForm, note: e.target.value })}
+                        placeholder="Ghi chú thêm (tùy chọn)"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                      />
+                    </div>
+
+                    {/* Variants */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-gray-700 required-label">Phân loại sản phẩm</label>
+                        <button
+                          type="button"
+                          onClick={() => setProductForm({ ...productForm, variants: [...productForm.variants, { variantName: "" }] })}
+                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 transition-colors"
+                        >
+                          + Thêm phân loại
+                        </button>
+                      </div>
+                      <div className="space-y-2 bg-gray-50 p-4 rounded-xl border border-gray-200/50">
+                        {productForm.variants.length > 0 && (
+                          <div className="hidden md:flex gap-2 items-center px-1 mb-1">
+                            <div className="flex-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên phân loại (vd: Đen, 256GB, ...)</div>
+                            <div className="w-[34px]"></div>
+                          </div>
+                        )}
+                        {productForm.variants.map((variant, index) => (
+                          <div key={index} className="flex gap-2 items-center">
+                            <input
+                              type="text"
+                              value={variant.variantName}
+                              onChange={(e) => {
+                                const next = [...productForm.variants];
+                                next[index] = { ...variant, variantName: e.target.value };
+                                setProductForm({ ...productForm, variants: next });
+                              }}
+                              placeholder="Tên phân loại (vd: Đen, 256GB, ...)"
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                            />
+                            <button
+                              type="button"
+                              disabled={productForm.variants.length === 1}
+                              onClick={() => setProductForm({ ...productForm, variants: productForm.variants.filter((_, i) => i !== index) })}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded disabled:opacity-50 transition-colors"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => void submitProduct()}
+                        className="px-6 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 disabled:bg-gray-400 transition-all shadow-soft-md"
+                      >
+                        {productForm.id ? "✓ Cập nhật sản phẩm" : "✓ Thêm sản phẩm"}
+                      </button>
+                      <button
+                        onClick={() => setProductForm(emptyProduct)}
+                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
+                      >
+                        Làm mới
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Search Filters */}
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-soft-sm">
+                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-2">Tên sản phẩm</label>
+                        <input
+                          type="text"
+                          value={keyword}
+                          onChange={(e) => setKeyword(e.target.value)}
+                          placeholder="Tìm kiếm theo tên sản phẩm..."
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-2">Danh mục</label>
+                        <select
+                          value={filterCategoryId}
+                          onChange={(e) => setFilterCategoryId(Number(e.target.value))}
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value={0}>Tất cả danh mục</option>
+                          {categoryOptions.map((cat) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 pt-3">
+                      <button
+                        onClick={() => { if (productPage === 0) void loadProducts(); else setProductPage(0); }}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 transition-colors"
+                      >
+                        🔍 Tìm kiếm
+                      </button>
+                      <button
+                        onClick={() => { setKeyword(""); setFilterCategoryId(0); if (productPage === 0) void loadProducts(true); else setProductPage(0); }}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
+                      >
+                        ↻ Làm mới
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Product Table */}
+                  <DataState loading={productLoading}>
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Sản phẩm</th>
+                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Danh mục</th>
+                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Phân loại</th>
+                          <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Bảo hành</th>
+                          <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {products.map((product) => (
+                          <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="font-bold text-gray-900">{product.name}</div>
+                              {product.note && <div className="text-xs text-gray-500 italic">{product.note}</div>}
+                            </td>
+                            <td className="px-6 py-4 text-gray-600">{product.categoryName}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-wrap gap-1">
+                                {product.variants.map((v) => (
+                                  <span key={v.variantName} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs border border-blue-100">
+                                    {v.variantName}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center">{product.warrantyMonths} tháng</td>
+                            <td className="px-6 py-4 text-center">
+                              <div className="flex justify-center gap-2">
+                                <button onClick={() => editProduct(product)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
+                                <button onClick={() => void removeProduct(product.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">🗑️</button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </DataState>
+
+                  {/* Pagination */}
+                  <div className="px-6 py-4 border-t border-gray-100 flex justify-center gap-4 bg-gray-50/50 items-center">
+                    <button
+                      onClick={() => setProductPage(Math.max(0, productPage - 1))}
+                      disabled={productPage <= 0}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      ← Trước
+                    </button>
+                    <span className="text-sm">
+                      Trang <strong>{productPage + 1}</strong> / <strong>{Math.max(productTotalPages, 1)}</strong>
+                    </span>
+                    <button
+                      onClick={() => setProductPage(productPage + 1)}
+                      disabled={productPage + 1 >= productTotalPages}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Sau →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {/* Category Form */}
+                <div className="bg-white rounded-lg shadow-soft-md p-6 mb-6">
+                  <div className="mb-6 pb-4 border-b border-gray-200">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {categoryForm.id ? "Cập nhật danh mục" : "Thêm danh mục mới"}
+                    </h2>
+                    <p className="text-gray-600 text-sm mt-1">Quản lý nhóm sản phẩm</p>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-2 required-label">Tên danh mục</label>
+                        <input
+                          type="text"
+                          value={categoryForm.name}
+                          onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                          placeholder="Nhập tên danh mục (vd: Điện thoại, Laptop...)"
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-2">Mô tả</label>
+                        <input
+                          type="text"
+                          value={categoryForm.description}
+                          onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                          placeholder="Mô tả ngắn gọn"
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => void submitCategory()}
+                        className="px-6 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 disabled:bg-gray-400 transition-all shadow-soft-md"
+                      >
+                        {categoryForm.id ? "✓ Cập nhật danh mục" : "✓ Thêm danh mục"}
+                      </button>
+                      <button
+                        onClick={() => setCategoryForm(emptyCategory)}
+                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
+                      >
+                        Làm mới
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category Table */}
+                <DataState loading={categoryLoading}>
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-soft-sm">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Tên danh mục</th>
+                        <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Mô tả</th>
+                        <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {categories.map((cat) => (
+                        <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 font-bold text-gray-900">{cat.name}</td>
+                          <td className="px-6 py-4 text-gray-600">{cat.description || "-"}</td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex justify-center gap-2">
+                              <button onClick={() => editCategory(cat)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
+                              <button onClick={() => void removeCategory(cat.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">🗑️</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="px-6 py-4 border-t border-gray-100 flex justify-center gap-4 bg-gray-50/50">
+                    <button
+                      onClick={() => setCategoryPage(Math.max(0, categoryPage - 1))}
+                      disabled={categoryPage <= 0}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      ← Trước
+                    </button>
+                    <span className="text-sm self-center">
+                      Trang {categoryPage + 1} / {Math.max(categoryTotalPages, 1)}
+                    </span>
+                    <button
+                      onClick={() => setCategoryPage(categoryPage + 1)}
+                      disabled={categoryPage + 1 >= categoryTotalPages}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Sau →
+                    </button>
+                  </div>
+                </div>
+                </DataState>
               </div>
-              <Pagination page={productPage} totalPages={productTotalPages} onChange={setProductPage} />
-            </section>
-          </div>
-        ) : (
-          <div className="grid two">
-            <section className="form-panel">
-              <h2>{categoryForm.id ? "Cập nhật danh mục" : "Tạo danh mục"}</h2>
-              <div className="form-grid">
-                <label className="field"><span>Tên</span><input value={categoryForm.name} onChange={(event) => setCategoryForm({ ...categoryForm, name: event.target.value })} /></label>
-                <label className="field full"><span>Mô tả</span><textarea value={categoryForm.description} onChange={(event) => setCategoryForm({ ...categoryForm, description: event.target.value })} /></label>
-              </div>
-              <div className="toolbar">
-                <button className="primary" onClick={() => void submitCategory()}><Save size={16} /> Lưu</button>
-                <button className="ghost" onClick={() => setCategoryForm(emptyCategory)}>Làm mới</button>
-              </div>
-            </section>
-            <section className="section">
-              <div className="table-wrap">
-                <table>
-                  <thead><tr><th>ID</th><th>Tên</th><th>Mô tả</th><th></th></tr></thead>
-                  <tbody>
-                    {categories.map((category) => (
-                      <tr key={category.id}><td>{category.id}</td><td>{category.name}</td><td>{category.description}</td><td><div className="row-actions"><button className="secondary" onClick={() => editCategory(category)}>Sửa</button><button className="danger" onClick={() => void removeCategory(category.id)}>Xóa</button></div></td></tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <Pagination page={categoryPage} totalPages={categoryTotalPages} onChange={setCategoryPage} />
-            </section>
-          </div>
-        )}
-      </DataState>
-    </>
+            )}
+        </div>
+      </div>
+    </div>
   );
 }

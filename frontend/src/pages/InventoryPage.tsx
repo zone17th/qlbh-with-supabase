@@ -1,6 +1,7 @@
-import { Plus, Save, Trash2 } from "lucide-react";
+import { Search, RefreshCw, Plus, Save, Trash2, Box, Activity } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { DataState } from "../components/DataState";
+import { DatePicker } from "../components/DatePicker";
 import { Pagination } from "../components/Pagination";
 import { catalogService } from "../services/catalogService";
 import { inventoryService } from "../services/inventoryService";
@@ -32,39 +33,89 @@ export function InventoryPage() {
   const [transactions, setTransactions] = useState<InventoryTransaction[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [filterType, setFilterType] = useState("");
+
+  // Summary Filters
+  const [sumProductId, setSumProductId] = useState<number | "">("");
+  const [sumVariantName, setSumVariantName] = useState("");
+  const [sumHasStock, setSumHasStock] = useState(false);
+  const [sumHasAvailable, setSumHasAvailable] = useState(false);
+
+  // Transaction Filters
+  const [txType, setTxType] = useState("");
+  const [txProductId, setTxProductId] = useState<number | "">("");
+  const [txVariantName, setTxVariantName] = useState("");
+  const [txDateFrom, setTxDateFrom] = useState("");
+  const [txDateTo, setTxDateTo] = useState("");
+
   const [importForm, setImportForm] = useState<InventoryImportForm>(emptyImport);
   const [exportForm, setExportForm] = useState<InventoryExportForm>(emptyExport);
   const [lotOptions, setLotOptions] = useState<Record<string, InventoryImportOption[]>>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // For import/export forms
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [txLoading, setTxLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selectedImportProduct = useMemo(() => products.find((item) => item.id === importForm.productId), [products, importForm.productId]);
   const selectedExportProduct = useMemo(() => products.find((item) => item.id === exportForm.productId), [products, exportForm.productId]);
 
-  async function load() {
-    setLoading(true);
-    setError(null);
+  async function loadProducts() {
     try {
-      const [productResult, summaryResult, txResult] = await Promise.all([
-        catalogService.products({ page: 0, size: 500 }),
-        inventoryService.summary({ page: 0, size: 5000 }),
-        inventoryService.transactions({ page, size: 20, type: filterType }),
-      ]);
-      setProducts(productResult.items);
-      setSummary(summaryResult.items);
-      setTransactions(txResult.items);
-      setTotalPages(txResult.totalPages);
+      const result = await catalogService.products({ page: 0, size: 500 });
+      setProducts(result.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function loadSummary(reset = false) {
+    setSummaryLoading(true);
+    try {
+      const result = await inventoryService.summary({
+        page: 0,
+        size: 5000,
+        productId: reset ? undefined : (sumProductId ? Number(sumProductId) : undefined),
+        variantName: reset ? undefined : sumVariantName || undefined,
+        hasRemainingStock: reset ? undefined : sumHasStock || undefined,
+        hasAvailable: reset ? undefined : sumHasAvailable || undefined,
+      });
+      setSummary(result.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setLoading(false);
+      setSummaryLoading(false);
+    }
+  }
+
+  async function loadTransactions(reset = false) {
+    setTxLoading(true);
+    try {
+      const result = await inventoryService.transactions({
+        page: reset ? 0 : page,
+        size: 20,
+        type: reset ? undefined : txType || undefined,
+        productId: reset ? undefined : (txProductId ? Number(txProductId) : undefined),
+        variantName: reset ? undefined : txVariantName || undefined,
+        dateFrom: reset ? undefined : txDateFrom || undefined,
+        dateTo: reset ? undefined : txDateTo || undefined,
+      });
+      setTransactions(result.items);
+      setTotalPages(result.totalPages);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setTxLoading(false);
     }
   }
 
   useEffect(() => {
-    void load();
-  }, [page, filterType]);
+    void loadProducts();
+    void loadSummary();
+  }, []);
+
+  useEffect(() => {
+    void loadTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   async function loadLotOptions(index: number, variantName: string) {
     if (!exportForm.productId || !variantName) return;
@@ -89,7 +140,8 @@ export function InventoryPage() {
     try {
       await inventoryService.importStock(importForm);
       setImportForm(emptyImport);
-      await load();
+      void loadSummary();
+      if (page === 0) void loadTransactions(); else setPage(0);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -111,7 +163,8 @@ export function InventoryPage() {
     try {
       await inventoryService.exportStock(exportForm);
       setExportForm(emptyExport);
-      await load();
+      void loadSummary();
+      if (page === 0) void loadTransactions(); else setPage(0);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -123,131 +176,370 @@ export function InventoryPage() {
     if (!window.confirm("Xóa giao dịch kho này?")) return;
     try {
       await inventoryService.deleteTransaction(id);
-      await load();
+      void loadSummary();
+      if (page === 0) void loadTransactions(); else setPage(0);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
   }
 
+  function handleSearchSummary() {
+    void loadSummary();
+  }
+
+  function handleResetSummary() {
+    setSumProductId("");
+    setSumVariantName("");
+    setSumHasStock(false);
+    setSumHasAvailable(false);
+    void loadSummary(true);
+  }
+
+  function handleSearchTx() {
+    if (page === 0) void loadTransactions();
+    else setPage(0);
+  }
+
+  function handleResetTx() {
+    setTxType("");
+    setTxProductId("");
+    setTxVariantName("");
+    setTxDateFrom("");
+    setTxDateTo("");
+    if (page === 0) void loadTransactions(true);
+    else setPage(0);
+  }
+
   return (
-    <>
-      <div className="page-header">
-        <div>
-          <h1>Kho</h1>
-          <p>Nhập kho, xuất kho thủ công, tồn kho và giao dịch.</p>
-        </div>
-        <div className="toolbar">
-          <label className="field"><span>Loại giao dịch</span><select value={filterType} onChange={(event) => setFilterType(event.target.value)}><option value="">Tất cả</option><option value="IMPORT">Nhập</option><option value="EXPORT">Xuất</option></select></label>
-        </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="mb-4">
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Quản lý Kho</h1>
+        <p className="text-gray-500 mt-1">Quản lý nhập, xuất kho, theo dõi tồn kho và lịch sử giao dịch</p>
       </div>
 
-      <DataState loading={loading} error={error} empty={false}>
-        <div className="tabs">
-          <button className={tab === "IMPORT" ? "active" : ""} onClick={() => setTab("IMPORT")}>Nhập kho</button>
-          <button className={tab === "EXPORT" ? "active" : ""} onClick={() => setTab("EXPORT")}>Xuất kho</button>
-        </div>
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
+      )}
 
-        <div className="grid two">
-          <section className="form-panel">
+      {/* TOP SECTION: Form with Tabs */}
+        <div className="bg-white rounded-2xl shadow-soft-md border border-gray-100 overflow-hidden mb-6">
+          <div className="flex bg-gray-50/80 border-b border-gray-200">
+            <button
+              type="button"
+              onClick={() => setTab("IMPORT")}
+              className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 text-sm font-bold transition-all focus:outline-none ${
+                tab === "IMPORT" ? "bg-blue-600 text-white shadow-soft-sm" : "text-gray-600 hover:text-blue-600 hover:bg-white"
+              }`}
+            >
+              <span className="text-lg">📥</span> Nhập kho
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("EXPORT")}
+              className={`flex-1 flex items-center justify-center gap-2 py-4 px-4 text-sm font-bold transition-all focus:outline-none ${
+                tab === "EXPORT" ? "bg-blue-600 text-white shadow-soft-sm" : "text-gray-600 hover:text-blue-600 hover:bg-white"
+              }`}
+            >
+              <span className="text-lg">📤</span> Xuất kho
+            </button>
+          </div>
+
+          <div className="p-6">
             {tab === "IMPORT" ? (
-              <>
-                <h2>Nhập kho</h2>
-                <div className="form-grid">
-                  <label className="field"><span>Sản phẩm</span><select value={importForm.productId} onChange={(event) => setImportForm({ ...importForm, productId: Number(event.target.value), items: [{ ...importForm.items[0], variantName: "" }] })}><option value={0}>Chọn sản phẩm</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
-                  <label className="field"><span>Ngày nhập</span><input type="date" value={importForm.importDate} onChange={(event) => setImportForm({ ...importForm, importDate: event.target.value })} /></label>
-                  <label className="field full"><span>Invoice file</span><input value={importForm.invoiceFile} onChange={(event) => setImportForm({ ...importForm, invoiceFile: event.target.value })} /></label>
-                  <label className="field full"><span>Ghi chú</span><textarea value={importForm.note} onChange={(event) => setImportForm({ ...importForm, note: event.target.value })} /></label>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="flex flex-col md:col-span-1">
+                    <label className="text-sm font-medium text-gray-700 mb-1 required-label">Sản phẩm</label>
+                    <select value={importForm.productId} onChange={(e) => setImportForm({ ...importForm, productId: Number(e.target.value), items: [{ ...importForm.items[0], variantName: "" }] })} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]">
+                      <option value={0}>Chọn sản phẩm</option>
+                      {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex flex-col md:col-span-1">
+                    <label className="text-sm font-medium text-gray-700 mb-1">Ngày nhập</label>
+                    <DatePicker value={importForm.importDate} onChange={(val) => setImportForm({ ...importForm, importDate: val })} />
+                  </div>
+                  <div className="flex flex-col md:col-span-2">
+                    <label className="text-sm font-medium text-gray-700 mb-1">Invoice file / Ghi chú</label>
+                    <div className="flex gap-2">
+                      <input placeholder="Tên file hóa đơn" value={importForm.invoiceFile} onChange={(e) => setImportForm({ ...importForm, invoiceFile: e.target.value })} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]" />
+                      <input placeholder="Ghi chú thêm" value={importForm.note} onChange={(e) => setImportForm({ ...importForm, note: e.target.value })} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]" />
+                    </div>
+                  </div>
                 </div>
-                <div className="inline-list">
+                <div className="space-y-2 bg-gray-50 p-4 rounded-xl border border-gray-200/50">
+                  <label className="text-sm font-medium text-gray-700 block mb-2 required-label">Danh sách phân loại nhập</label>
+                  {importForm.items.length > 0 && (
+                    <div className="hidden md:flex gap-2 items-center px-1 mb-1">
+                      <div className="flex-1 min-w-[200px] text-xs font-semibold text-gray-500 uppercase tracking-wider">Phân loại</div>
+                      <div className="w-32 text-xs font-semibold text-gray-500 uppercase tracking-wider">Giá nhập</div>
+                      <div className="w-32 text-xs font-semibold text-gray-500 uppercase tracking-wider">Số lượng</div>
+                      <div className="w-[34px]"></div>
+                    </div>
+                  )}
                   {importForm.items.map((item, index) => (
-                    <div className="inline-row" key={index}>
-                      <select value={item.variantName} onChange={(event) => {
-                        const next = [...importForm.items];
-                        next[index] = { ...item, variantName: event.target.value };
-                        setImportForm({ ...importForm, items: next });
-                      }}><option value="">Phân loại</option>{selectedImportProduct?.variants.map((variant) => <option key={variant.variantName} value={variant.variantName}>{variant.variantName}</option>)}</select>
-                      <input type="number" min={0} value={item.importPrice} onChange={(event) => {
-                        const next = [...importForm.items];
-                        next[index] = { ...item, importPrice: Number(event.target.value) };
-                        setImportForm({ ...importForm, items: next });
-                      }} />
-                      <input type="number" min={0.000001} step={0.000001} value={item.quantity} onChange={(event) => {
-                        const next = [...importForm.items];
-                        next[index] = { ...item, quantity: Number(event.target.value) };
-                        setImportForm({ ...importForm, items: next });
-                      }} />
-                      <button className="ghost" onClick={() => setImportForm({ ...importForm, items: importForm.items.filter((_, i) => i !== index) })}><Trash2 size={16} /></button>
+                    <div key={index} className="flex flex-wrap md:flex-nowrap gap-2 items-center">
+                      <select value={item.variantName} onChange={(e) => { const next = [...importForm.items]; next[index] = { ...item, variantName: e.target.value }; setImportForm({ ...importForm, items: next }); }} className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]">
+                        <option value="">Phân loại</option>
+                        {selectedImportProduct?.variants.map((v) => <option key={v.variantName} value={v.variantName}>{v.variantName}</option>)}
+                      </select>
+                      <input type="number" min={0} placeholder="Giá nhập" value={item.importPrice} onChange={(e) => { const next = [...importForm.items]; next[index] = { ...item, importPrice: Number(e.target.value) }; setImportForm({ ...importForm, items: next }); }} className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]" />
+                      <input type="number" min={0.000001} step={0.000001} placeholder="Số lượng" value={item.quantity} onChange={(e) => { const next = [...importForm.items]; next[index] = { ...item, quantity: Number(e.target.value) }; setImportForm({ ...importForm, items: next }); }} className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]" />
+                      <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200" onClick={() => setImportForm({ ...importForm, items: importForm.items.filter((_, i) => i !== index) })}><Trash2 size={16} /></button>
                     </div>
                   ))}
-                  <button className="secondary" onClick={() => setImportForm({ ...importForm, items: [...importForm.items, { variantName: "", importPrice: 0, quantity: 1 }] })}><Plus size={16} /> Thêm dòng</button>
+                  <button onClick={() => setImportForm({ ...importForm, items: [...importForm.items, { variantName: "", importPrice: 0, quantity: 1 }] })} className="mt-2 flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-50 hover:border-blue-200 transition-colors">
+                    <Plus size={14} /> Thêm phân loại
+                  </button>
                 </div>
-                <button className="primary" onClick={() => void submitImport()}><Save size={16} /> Lưu nhập kho</button>
-              </>
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => void submitImport()} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20">
+                    <Save size={16} /> Nhập kho
+                  </button>
+                  <button onClick={() => setImportForm(emptyImport)} className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all">
+                    Làm mới
+                  </button>
+                </div>
+              </div>
             ) : (
-              <>
-                <h2>Xuất kho thủ công</h2>
-                <div className="form-grid">
-                  <label className="field"><span>Sản phẩm</span><select value={exportForm.productId} onChange={(event) => setExportForm({ ...exportForm, productId: Number(event.target.value), items: [{ variantName: "", importTransactionId: 0, quantity: 1 }] })}><option value={0}>Chọn sản phẩm</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
-                  <label className="field"><span>Ngày xuất</span><input type="date" value={exportForm.transactionDate} onChange={(event) => setExportForm({ ...exportForm, transactionDate: event.target.value })} /></label>
-                  <label className="field full"><span>Ghi chú</span><textarea value={exportForm.note} onChange={(event) => setExportForm({ ...exportForm, note: event.target.value })} /></label>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="flex flex-col md:col-span-1">
+                    <label className="text-sm font-medium text-gray-700 mb-1 required-label">Sản phẩm</label>
+                    <select value={exportForm.productId} onChange={(e) => setExportForm({ ...exportForm, productId: Number(e.target.value), items: [{ variantName: "", importTransactionId: 0, quantity: 1 }] })} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]">
+                      <option value={0}>Chọn sản phẩm</option>
+                      {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex flex-col md:col-span-1">
+                    <label className="text-sm font-medium text-gray-700 mb-1">Ngày xuất</label>
+                    <DatePicker value={exportForm.transactionDate} onChange={(val) => setExportForm({ ...exportForm, transactionDate: val })} />
+                  </div>
+                  <div className="flex flex-col md:col-span-2">
+                    <label className="text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
+                    <input placeholder="Ghi chú xuất kho" value={exportForm.note} onChange={(e) => setExportForm({ ...exportForm, note: e.target.value })} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]" />
+                  </div>
                 </div>
-                <div className="inline-list">
+                <div className="space-y-2 bg-gray-50 p-4 rounded-xl border border-gray-200/50">
+                  <label className="text-sm font-medium text-gray-700 block mb-2 required-label">Danh sách phân loại xuất</label>
+                  {exportForm.items.length > 0 && (
+                    <div className="hidden md:flex gap-2 items-center px-1 mb-1">
+                      <div className="flex-1 min-w-[200px] text-xs font-semibold text-gray-500 uppercase tracking-wider">Phân loại</div>
+                      <div className="flex-1 min-w-[200px] text-xs font-semibold text-gray-500 uppercase tracking-wider">Lô nhập</div>
+                      <div className="w-32 text-xs font-semibold text-gray-500 uppercase tracking-wider">Số lượng</div>
+                      <div className="w-[34px]"></div>
+                    </div>
+                  )}
                   {exportForm.items.map((item, index) => {
                     const options = lotOptions[`${index}:${item.variantName}`] ?? [];
                     return (
-                      <div className="inline-row" key={index}>
-                        <select value={item.variantName} onChange={(event) => {
-                          const variantName = event.target.value;
-                          const next = [...exportForm.items];
-                          next[index] = { ...item, variantName, importTransactionId: 0 };
-                          setExportForm({ ...exportForm, items: next });
-                          void loadLotOptions(index, variantName);
-                        }}><option value="">Phân loại</option>{selectedExportProduct?.variants.map((variant) => <option key={variant.variantName} value={variant.variantName}>{variant.variantName}</option>)}</select>
-                        <select value={item.importTransactionId} onFocus={() => void loadLotOptions(index, item.variantName)} onChange={(event) => {
-                          const next = [...exportForm.items];
-                          next[index] = { ...item, importTransactionId: Number(event.target.value) };
-                          setExportForm({ ...exportForm, items: next });
-                        }}><option value={0}>Chọn lô</option>{options.map((option) => <option key={option.id} value={option.id}>#{option.id} còn {formatNumber(option.sellableQuantity)}</option>)}</select>
-                        <input type="number" min={0.000001} step={0.000001} value={item.quantity} onChange={(event) => {
-                          const next = [...exportForm.items];
-                          next[index] = { ...item, quantity: Number(event.target.value) };
-                          setExportForm({ ...exportForm, items: next });
-                        }} />
-                        <button className="ghost" onClick={() => setExportForm({ ...exportForm, items: exportForm.items.filter((_, i) => i !== index) })}><Trash2 size={16} /></button>
+                      <div key={index} className="flex flex-wrap md:flex-nowrap gap-2 items-center">
+                        <select value={item.variantName} onChange={(e) => { const v = e.target.value; const next = [...exportForm.items]; next[index] = { ...item, variantName: v, importTransactionId: 0 }; setExportForm({ ...exportForm, items: next }); void loadLotOptions(index, v); }} className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]">
+                          <option value="">Phân loại</option>
+                          {selectedExportProduct?.variants.map((v) => <option key={v.variantName} value={v.variantName}>{v.variantName}</option>)}
+                        </select>
+                        <select value={item.importTransactionId} onFocus={() => void loadLotOptions(index, item.variantName)} onChange={(e) => { const next = [...exportForm.items]; next[index] = { ...item, importTransactionId: Number(e.target.value) }; setExportForm({ ...exportForm, items: next }); }} className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]">
+                          <option value={0}>Chọn lô</option>
+                          {options.map((o) => <option key={o.id} value={o.id}>#{o.id} còn {formatNumber(o.sellableQuantity)}</option>)}
+                        </select>
+                        <input type="number" min={0.000001} step={0.000001} placeholder="Số lượng" value={item.quantity} onChange={(e) => { const next = [...exportForm.items]; next[index] = { ...item, quantity: Number(e.target.value) }; setExportForm({ ...exportForm, items: next }); }} className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]" />
+                        <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200" onClick={() => setExportForm({ ...exportForm, items: exportForm.items.filter((_, i) => i !== index) })}><Trash2 size={16} /></button>
                       </div>
                     );
                   })}
-                  <button className="secondary" onClick={() => setExportForm({ ...exportForm, items: [...exportForm.items, { variantName: "", importTransactionId: 0, quantity: 1 }] })}><Plus size={16} /> Thêm dòng</button>
+                  <button onClick={() => setExportForm({ ...exportForm, items: [...exportForm.items, { variantName: "", importTransactionId: 0, quantity: 1 }] })} className="mt-2 flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-50 hover:border-blue-200 transition-colors">
+                    <Plus size={14} /> Thêm phân loại
+                  </button>
                 </div>
-                <button className="primary" onClick={() => void submitExport()}><Save size={16} /> Lưu xuất kho</button>
-              </>
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => void submitExport()} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20">
+                    <Save size={16} /> Xuất kho
+                  </button>
+                  <button onClick={() => setExportForm(emptyExport)} className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all">
+                    Làm mới
+                  </button>
+                </div>
+              </div>
             )}
-          </section>
-
-          <section className="section">
-            <h2>Tồn kho</h2>
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Sản phẩm</th><th>Phân loại</th><th>Tồn</th><th>Đang giữ</th><th>Khả dụng</th><th>Giá nhập TB</th></tr></thead>
-                <tbody>{summary.map((item) => <tr key={`${item.productId}-${item.variantName}`}><td>{item.productName}</td><td>{item.variantName}</td><td>{formatNumber(item.currentStock)}</td><td>{formatNumber(item.pendingOrderQuantity)}</td><td>{formatNumber(item.availableAfterPending)}</td><td>{formatMoney(item.averageImportPrice)}</td></tr>)}</tbody>
-              </table>
-            </div>
-          </section>
+          </div>
         </div>
 
-        <section className="section">
-          <h2>Giao dịch kho</h2>
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>ID</th><th>Ngày</th><th>Sản phẩm</th><th>Loại</th><th>Nguồn</th><th>SL</th><th>Lô</th><th></th></tr></thead>
-              <tbody>
-                {transactions.map((tx) => <tr key={tx.id}><td>{tx.id}</td><td>{tx.transactionDate}</td><td>{tx.productName} / {tx.variantName}</td><td>{tx.type}</td><td>{tx.source}</td><td>{formatNumber(tx.quantity)}</td><td>{tx.batchCode ?? tx.importTransactionId}</td><td><button className="danger" onClick={() => void removeTransaction(tx.id)}>Xóa</button></td></tr>)}
-              </tbody>
-            </table>
+        {/* INVENTORY SUMMARY SECTION */}
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-soft-md mb-6">
+          <div className="px-6 py-4 border-b border-gray-200 bg-white">
+            <h3 className="text-lg font-bold text-gray-900">Tổng hợp tồn kho</h3>
           </div>
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-        </section>
-      </DataState>
-    </>
+          <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex flex-wrap gap-4 items-end">
+            <div className="flex flex-col flex-1 min-w-[200px]">
+              <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Sản phẩm</label>
+              <select value={sumProductId} onChange={(e) => setSumProductId(e.target.value ? Number(e.target.value) : "")} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                <option value="">Tất cả sản phẩm</option>
+                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col flex-1 min-w-[200px]">
+              <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Phân loại</label>
+              <input type="text" placeholder="Tất cả phân loại" value={sumVariantName} onChange={(e) => setSumVariantName(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white" />
+            </div>
+            <div className="flex items-center gap-4 flex-1 min-w-[200px] h-[38px]">
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={sumHasStock} onChange={(e) => setSumHasStock(e.target.checked)} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                Còn tồn kho
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input type="checkbox" checked={sumHasAvailable} onChange={(e) => setSumHasAvailable(e.target.checked)} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                Còn khả dụng
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleSearchSummary} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-sm">
+                <Search size={16} /> Tìm kiếm
+              </button>
+              <button onClick={handleResetSummary} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all">
+                <RefreshCw size={16} /> Làm mới
+              </button>
+            </div>
+          </div>
+          <DataState loading={summaryLoading}>
+          <div className="overflow-x-auto">
+            {summary.length === 0 ? (
+              <div className="p-8 text-center text-gray-500 flex flex-col items-center justify-center">
+                <Box size={48} className="text-gray-300 mb-4" />
+                <p>Chưa có dữ liệu tồn kho đáp ứng điều kiện tìm kiếm.</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs">Sản phẩm</th>
+                    <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs">Phân loại</th>
+                    <th className="px-6 py-3 text-right font-bold text-gray-700 uppercase tracking-wider text-xs">Giá nhập TB</th>
+                    <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider text-xs">Tổng nhập</th>
+                    <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider text-xs">Tổng xuất</th>
+                    <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider text-xs">Tồn hiện tại</th>
+                    <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider text-xs">Chờ giao</th>
+                    <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider text-xs">Đã giao</th>
+                    <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider text-xs">Khả dụng</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {summary.map((item) => (
+                    <tr key={`${item.productId}-${item.variantName}`} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-gray-900">{item.productName}</td>
+                      <td className="px-6 py-4"><span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs border border-blue-100">{item.variantName}</span></td>
+                      <td className="px-6 py-4 text-right font-medium text-gray-600">{formatMoney(item.averageImportPrice)}</td>
+                      <td className="px-6 py-4 text-center font-medium text-blue-600">{formatNumber(item.totalImported)}</td>
+                      <td className="px-6 py-4 text-center font-medium text-orange-600">{formatNumber(item.totalExported)}</td>
+                      <td className="px-6 py-4 text-center font-medium text-gray-900">{formatNumber(item.currentStock)}</td>
+                      <td className="px-6 py-4 text-center text-gray-600">{formatNumber(item.pendingOrderQuantity)}</td>
+                      <td className="px-6 py-4 text-center text-gray-600">{formatNumber(item.shippedOrderQuantity)}</td>
+                      <td className="px-6 py-4 text-center font-semibold text-emerald-600">{formatNumber(item.availableAfterPending)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+          </DataState>
+        </div>
+
+        {/* TRANSACTIONS SECTION */}
+        <div className="bg-white rounded-2xl shadow-soft-md border border-gray-100 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 bg-white">
+            <h3 className="text-lg font-bold text-gray-900">Lịch sử giao dịch kho</h3>
+          </div>
+          <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex flex-wrap gap-4 items-end">
+            <div className="flex flex-col flex-1 min-w-[150px]">
+              <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Loại giao dịch</label>
+              <select value={txType} onChange={(e) => setTxType(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                <option value="">Tất cả loại</option>
+                <option value="IMPORT">Nhập kho</option>
+                <option value="EXPORT">Xuất kho</option>
+              </select>
+            </div>
+            <div className="flex flex-col flex-1 min-w-[150px]">
+              <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Sản phẩm</label>
+              <select value={txProductId} onChange={(e) => setTxProductId(e.target.value ? Number(e.target.value) : "")} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                <option value="">Tất cả sản phẩm</option>
+                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col flex-1 min-w-[150px]">
+              <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Phân loại</label>
+              <input type="text" placeholder="Tất cả phân loại" value={txVariantName} onChange={(e) => setTxVariantName(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white" />
+            </div>
+            <div className="flex flex-col flex-1 min-w-[150px]">
+              <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Từ ngày</label>
+              <DatePicker value={txDateFrom} onChange={(val) => setTxDateFrom(val)} />
+            </div>
+            <div className="flex flex-col flex-1 min-w-[150px]">
+              <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Đến ngày</label>
+              <DatePicker value={txDateTo} onChange={(val) => setTxDateTo(val)} />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleSearchTx} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-sm">
+                <Search size={16} /> Tìm kiếm
+              </button>
+              <button onClick={handleResetTx} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all">
+                <RefreshCw size={16} /> Làm mới
+              </button>
+            </div>
+          </div>
+          <DataState loading={txLoading}>
+          <div className="overflow-x-auto">
+            {transactions.length === 0 ? (
+              <div className="p-8 text-center text-gray-500 flex flex-col items-center justify-center">
+                <Activity size={48} className="text-gray-300 mb-4" />
+                <p>Không có lịch sử giao dịch kho nào.</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs">ID</th>
+                    <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs">Sản phẩm</th>
+                    <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs">Phân loại</th>
+                    <th className="px-6 py-3 text-right font-bold text-gray-700 uppercase tracking-wider text-xs">Giá nhập</th>
+                    <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider text-xs">Số lượng</th>
+                    <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider text-xs">Loại</th>
+                    <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs">Nguồn</th>
+                    <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs">Ngày</th>
+                    <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs">File hóa đơn</th>
+                    <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs">Ghi chú</th>
+                    <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider text-xs">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {transactions.map((tx) => (
+                    <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-gray-900">{tx.id}</td>
+                      <td className="px-6 py-4 font-medium text-gray-900">{tx.productName}</td>
+                      <td className="px-6 py-4 text-gray-600">{tx.variantName || "-"}</td>
+                      <td className="px-6 py-4 text-right text-gray-600">{tx.importPrice != null ? formatMoney(tx.importPrice) : "-"}</td>
+                      <td className="px-6 py-4 text-center font-semibold">{formatNumber(tx.quantity)}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${tx.type === "IMPORT" ? "bg-green-50 text-green-700" : "bg-orange-50 text-orange-700"}`}>
+                          {tx.type === "IMPORT" ? "Nhập" : "Xuất"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{tx.source === "ORDER" ? "Đơn hàng" : tx.source === "ORDER_CANCEL" ? "Hoàn kho" : tx.source === "MANUAL" ? "Thủ công" : "Khác"}</td>
+                      <td className="px-6 py-4 text-gray-500 whitespace-nowrap">{tx.transactionDate}</td>
+                      <td className="px-6 py-4 text-blue-600 truncate max-w-[150px]">{tx.invoiceFile || "-"}</td>
+                      <td className="px-6 py-4 text-gray-600 truncate max-w-[200px]" title={tx.note || ""}>{tx.note || "-"}</td>
+                      <td className="px-6 py-4 text-center">
+                        <button onClick={() => void removeTransaction(tx.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"><Trash2 size={16} /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {transactions.length > 0 && <Pagination page={page} totalPages={totalPages} onChange={setPage} />}
+          </div>
+          </DataState>
+        </div>
+    </div>
   );
 }
