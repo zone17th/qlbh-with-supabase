@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { DataState } from "../components/DataState";
 import { DatePicker } from "../components/DatePicker";
+import { NumberInput } from "../components/NumberInput";
 import { Pagination } from "../components/Pagination";
 import { StatusBadge } from "../components/StatusBadge";
 import { catalogService } from "../services/catalogService";
@@ -233,8 +234,8 @@ export function OrdersPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="mb-4">
-        <h1 className="text-3xl font-bold text-gray-900">Quản lý Đơn hàng</h1>
-        <p className="text-gray-600 mt-2">Theo dõi vận chuyển, quản lý trạng thái và chỉnh sửa đơn hàng</p>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Quản lý Đơn hàng</h1>
+        <p className="mt-1 text-xs md:text-sm text-gray-500">Theo dõi vận chuyển, quản lý trạng thái và chỉnh sửa đơn hàng</p>
       </div>
 
       <button 
@@ -358,7 +359,7 @@ export function OrdersPage() {
 
       {/* Modal Overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl w-[90vw] max-w-[90vw] max-h-[95vh] flex flex-col overflow-hidden animate-fade-in">
             <div className="flex justify-between items-center p-5 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">
@@ -415,11 +416,11 @@ export function OrdersPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="flex flex-col">
                       <label className="text-xs font-semibold text-gray-700 mb-1">Phí ship dự kiến</label>
-                      <input type="number" min={0} value={form.shippingFee} onChange={(e) => setForm({ ...form, shippingFee: Number(e.target.value) })} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <NumberInput min={0} value={form.shippingFee} onChange={(val) => setForm({ ...form, shippingFee: val })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div className="flex flex-col">
                       <label className="text-xs font-semibold text-gray-700 mb-1">Giảm giá đơn hàng</label>
-                      <input type="number" min={0} value={form.discountAmount} onChange={(e) => setForm({ ...form, discountAmount: Number(e.target.value) })} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <NumberInput min={0} value={form.discountAmount} onChange={(val) => setForm({ ...form, discountAmount: val })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div className="flex flex-col">
                       <label className="text-xs font-semibold text-gray-700 mb-1">Ghi chú</label>
@@ -438,8 +439,8 @@ export function OrdersPage() {
                       </button>
                     )}
                   </div>
-                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <table className="w-full text-sm text-left">
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+                    <table className="min-w-[800px] w-full text-sm text-left">
                       <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
                           <th className="px-4 py-3 font-semibold text-gray-600">Sản phẩm</th>
@@ -483,16 +484,16 @@ export function OrdersPage() {
                               </td>
                               <td className="p-2 text-center font-medium text-gray-600">{formatNumber(stock)}</td>
                               <td className="p-2">
-                                <input type="number" min={0.000001} step={0.000001} value={item.quantity} onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })} className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-center" />
+                                <NumberInput min={0.000001} allowDecimals value={item.quantity} onChange={(val) => updateItem(index, { quantity: val })} className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-center" />
                               </td>
                               <td className="p-2">
-                                <input type="number" min={0} value={item.unitSalePrice} onChange={(e) => updateItem(index, { unitSalePrice: Number(e.target.value) })} className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" />
+                                <NumberInput min={0} value={item.unitSalePrice} onChange={(val) => updateItem(index, { unitSalePrice: val })} className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" />
                               </td>
                               <td className="p-2">
-                                <input type="number" min={0} value={item.discountAmount} onChange={(e) => updateItem(index, { discountAmount: Number(e.target.value) })} className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" />
+                                <NumberInput min={0} value={item.discountAmount} onChange={(val) => updateItem(index, { discountAmount: val })} className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" />
                               </td>
                               <td className="p-2">
-                                <input type="number" min={0} value={item.warrantyMonths ?? ""} onChange={(e) => updateItem(index, { warrantyMonths: e.target.value ? Number(e.target.value) : null })} placeholder="Tháng" className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-center" />
+                                <NumberInput min={0} value={item.warrantyMonths ?? ""} onChange={(val) => updateItem(index, { warrantyMonths: val || null })} placeholder="Tháng" className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-center" />
                               </td>
                               <td className="p-2 text-right font-semibold text-gray-800">{formatMoney(lineTotal)}</td>
                               {!isReadOnly && (
@@ -519,8 +520,8 @@ export function OrdersPage() {
                     )}
                   </div>
                   {form.extraCosts.length > 0 && (
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                      <table className="w-full text-sm text-left">
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+                      <table className="min-w-[400px] w-full text-sm text-left">
                         <thead className="bg-gray-50 border-b border-gray-200">
                           <tr>
                             <th className="px-4 py-3 font-semibold text-gray-600">Tên chi phí</th>
@@ -535,7 +536,7 @@ export function OrdersPage() {
                                 <input placeholder="Tên chi phí" value={cost.costName} onChange={(e) => { const next = [...form.extraCosts]; next[index] = { ...cost, costName: e.target.value }; setForm({ ...form, extraCosts: next }); }} className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
                               </td>
                               <td className="p-2">
-                                <input type="number" min={0} value={cost.amount} onChange={(e) => { const next = [...form.extraCosts]; next[index] = { ...cost, amount: Number(e.target.value) }; setForm({ ...form, extraCosts: next }); }} className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" />
+                                <NumberInput min={0} value={cost.amount} onChange={(val) => { const next = [...form.extraCosts]; next[index] = { ...cost, amount: val }; setForm({ ...form, extraCosts: next }); }} className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" />
                               </td>
                               {!isReadOnly && (
                                 <td className="p-2 text-center">
@@ -601,7 +602,7 @@ export function OrdersPage() {
 
       {/* Shipping Dialog */}
       {shippingOrder && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fade-in">
             <div className="flex justify-between items-center p-5 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">Bắt đầu giao hàng: {shippingOrder.orderCode}</h2>
@@ -642,11 +643,11 @@ export function OrdersPage() {
                 </div>
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-700 mb-2">Phí ship thực tế</label>
-                  <input type="number" min={0} value={shippingForm.actualShippingFee} onChange={(e) => setShippingForm({ ...shippingForm, actualShippingFee: Number(e.target.value) })} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]" />
+                  <NumberInput min={0} value={shippingForm.actualShippingFee} onChange={(val) => setShippingForm({ ...shippingForm, actualShippingFee: val })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]" />
                 </div>
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-700 mb-2">Chi phí phát sinh</label>
-                  <input type="number" min={0} value={shippingForm.additionalCost} onChange={(e) => setShippingForm({ ...shippingForm, additionalCost: Number(e.target.value) })} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]" />
+                  <NumberInput min={0} value={shippingForm.additionalCost} onChange={(val) => setShippingForm({ ...shippingForm, additionalCost: val })} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]" />
                 </div>
               </div>
               <div className="flex gap-3 pt-6 mt-2 border-t border-gray-100">

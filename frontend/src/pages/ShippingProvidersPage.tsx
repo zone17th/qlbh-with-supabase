@@ -85,13 +85,10 @@ export function ShippingProvidersPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Đơn vị giao hàng</h1>
-            <p className="text-gray-600 mt-2">Đơn vị giao hàng và danh sách shipper.</p>
-          </div>
-        </div>
+      {/* Page Header */}
+      <div className="mb-4">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Đơn vị giao hàng</h1>
+        <p className="mt-1 text-xs md:text-sm text-gray-500">Đơn vị giao hàng và danh sách shipper.</p>
       </div>
 
       {/* Search */}
@@ -159,13 +156,13 @@ export function ShippingProvidersPage() {
                         placeholder="Tên shipper"
                         value={shipper.shipperName}
                         onChange={(e) => { const next = [...form.shippers]; next[index] = { ...shipper, shipperName: e.target.value }; setForm({ ...form, shippers: next }); }}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
                       />
                       <input
                         placeholder="Số điện thoại"
                         value={shipper.shipperPhone}
                         onChange={(e) => { const next = [...form.shippers]; next[index] = { ...shipper, shipperPhone: e.target.value }; setForm({ ...form, shippers: next }); }}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
                       />
                       <button
                         className="p-2 text-red-600 hover:bg-red-50 rounded disabled:opacity-50 transition-colors"
@@ -179,11 +176,11 @@ export function ShippingProvidersPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
-                <button onClick={() => void submit()} className="px-6 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition-all shadow-soft-md">
-                  {form.id ? "✓ Cập nhật đơn vị giao hàng" : "✓ Tạo đơn vị giao hàng"}
+              <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-100">
+                <button onClick={() => void submit()} className="flex-1 sm:flex-none px-6 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition-all shadow-soft-md whitespace-nowrap">
+                  {form.id ? "✓ Cập nhật đơn vị" : "✓ Tạo đơn vị"}
                 </button>
-                <button onClick={() => setForm(emptyForm)} className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all">
+                <button onClick={() => setForm(emptyForm)} className="flex-1 sm:flex-none px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all whitespace-nowrap">
                   Làm mới
                 </button>
               </div>
@@ -191,8 +188,8 @@ export function ShippingProvidersPage() {
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-soft-sm">
-            <table className="w-full text-sm">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto shadow-soft-sm">
+            <table className="min-w-[600px] w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Đơn vị giao hàng</th>

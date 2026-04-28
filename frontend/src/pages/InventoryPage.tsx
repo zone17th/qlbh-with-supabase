@@ -2,6 +2,7 @@ import { Search, RefreshCw, Plus, Save, Trash2, Box, Activity } from "lucide-rea
 import { useEffect, useMemo, useState } from "react";
 import { DataState } from "../components/DataState";
 import { DatePicker } from "../components/DatePicker";
+import { NumberInput } from "../components/NumberInput";
 import { Pagination } from "../components/Pagination";
 import { catalogService } from "../services/catalogService";
 import { inventoryService } from "../services/inventoryService";
@@ -214,8 +215,8 @@ export function InventoryPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="mb-4">
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Quản lý Kho</h1>
-        <p className="text-gray-500 mt-1">Quản lý nhập, xuất kho, theo dõi tồn kho và lịch sử giao dịch</p>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Quản lý Kho</h1>
+        <p className="mt-1 text-xs md:text-sm text-gray-500">Quản lý nhập, xuất kho, theo dõi tồn kho và lịch sử giao dịch</p>
       </div>
 
       {/* Error */}
@@ -285,8 +286,8 @@ export function InventoryPage() {
                         <option value="">Phân loại</option>
                         {selectedImportProduct?.variants.map((v) => <option key={v.variantName} value={v.variantName}>{v.variantName}</option>)}
                       </select>
-                      <input type="number" min={0} placeholder="Giá nhập" value={item.importPrice} onChange={(e) => { const next = [...importForm.items]; next[index] = { ...item, importPrice: Number(e.target.value) }; setImportForm({ ...importForm, items: next }); }} className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]" />
-                      <input type="number" min={0.000001} step={0.000001} placeholder="Số lượng" value={item.quantity} onChange={(e) => { const next = [...importForm.items]; next[index] = { ...item, quantity: Number(e.target.value) }; setImportForm({ ...importForm, items: next }); }} className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]" />
+                      <NumberInput min={0} placeholder="Giá nhập" value={item.importPrice} onChange={(val) => { const next = [...importForm.items]; next[index] = { ...item, importPrice: val }; setImportForm({ ...importForm, items: next }); }} className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]" />
+                      <NumberInput min={0.000001} allowDecimals placeholder="Số lượng" value={item.quantity} onChange={(val) => { const next = [...importForm.items]; next[index] = { ...item, quantity: val }; setImportForm({ ...importForm, items: next }); }} className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]" />
                       <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200" onClick={() => setImportForm({ ...importForm, items: importForm.items.filter((_, i) => i !== index) })}><Trash2 size={16} /></button>
                     </div>
                   ))}
@@ -344,7 +345,7 @@ export function InventoryPage() {
                           <option value={0}>Chọn lô</option>
                           {options.map((o) => <option key={o.id} value={o.id}>#{o.id} còn {formatNumber(o.sellableQuantity)}</option>)}
                         </select>
-                        <input type="number" min={0.000001} step={0.000001} placeholder="Số lượng" value={item.quantity} onChange={(e) => { const next = [...exportForm.items]; next[index] = { ...item, quantity: Number(e.target.value) }; setExportForm({ ...exportForm, items: next }); }} className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]" />
+                        <NumberInput min={0.000001} allowDecimals placeholder="Số lượng" value={item.quantity} onChange={(val) => { const next = [...exportForm.items]; next[index] = { ...item, quantity: val }; setExportForm({ ...exportForm, items: next }); }} className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm h-[38px]" />
                         <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200" onClick={() => setExportForm({ ...exportForm, items: exportForm.items.filter((_, i) => i !== index) })}><Trash2 size={16} /></button>
                       </div>
                     );
@@ -379,10 +380,10 @@ export function InventoryPage() {
                 {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
-            <div className="flex flex-col flex-1 min-w-[200px]">
+            {/* <div className="flex flex-col flex-1 min-w-[200px]">
               <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Phân loại</label>
               <input type="text" placeholder="Tất cả phân loại" value={sumVariantName} onChange={(e) => setSumVariantName(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white" />
-            </div>
+            </div> */}
             <div className="flex items-center gap-4 flex-1 min-w-[200px] h-[38px]">
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input type="checkbox" checked={sumHasStock} onChange={(e) => setSumHasStock(e.target.checked)} className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
@@ -466,10 +467,10 @@ export function InventoryPage() {
                 {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
-            <div className="flex flex-col flex-1 min-w-[150px]">
+            {/* <div className="flex flex-col flex-1 min-w-[150px]">
               <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Phân loại</label>
               <input type="text" placeholder="Tất cả phân loại" value={txVariantName} onChange={(e) => setTxVariantName(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white" />
-            </div>
+            </div> */}
             <div className="flex flex-col flex-1 min-w-[150px]">
               <label className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Từ ngày</label>
               <DatePicker value={txDateFrom} onChange={(val) => setTxDateFrom(val)} />

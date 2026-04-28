@@ -104,51 +104,64 @@ export function DashboardPage() {
       {/* ═══ Header Row ═══ */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
             Dashboard
           </h1>
-          <p className="mt-1 text-gray-500">
+          <p className="mt-1 text-xs md:text-sm text-gray-500">
             Tổng quan kinh doanh — cập nhật theo thời gian thực
           </p>
         </div>
 
         {/* Date range controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1 text-gray-400 text-sm">
-            <CalendarDays size={14} />
-          </span>
-          {["7", "30", "90"].map((val) => (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="hidden sm:flex items-center justify-center text-gray-400 bg-white w-9 h-9 rounded-lg border border-gray-200 shadow-sm">
+              <CalendarDays size={16} />
+            </span>
+            <div className="flex bg-gray-100 p-1 rounded-lg flex-1 sm:flex-none">
+              {["7", "30", "90"].map((val) => (
+                <button
+                  key={val}
+                  onClick={() => onPresetChange(val)}
+                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                    preset === val
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {val}D
+                </button>
+              ))}
+            </div>
             <button
-              key={val}
-              onClick={() => onPresetChange(val)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                preset === val
-                  ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30"
-                  : "bg-white text-gray-600 border border-gray-200 hover:border-blue-300"
-              }`}
+              onClick={() => void dashboardQuery.refetch()}
+              className="p-2 w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all flex sm:hidden items-center justify-center shadow-sm"
             >
-              {val}D
+              <RefreshCw size={16} className={dashboardQuery.isFetching ? "animate-spin" : ""} />
             </button>
-          ))}
-          <div className="w-[140px]">
-            <DatePicker
-              value={fromDate}
-              onChange={(val) => { setFromDate(val); setPreset("custom"); }}
-            />
           </div>
-          <span className="text-gray-300 text-xs">→</span>
-          <div className="w-[140px]">
-            <DatePicker
-              value={toDate}
-              onChange={(val) => { setToDate(val); setPreset("custom"); }}
-            />
+          
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex-1 sm:w-[130px]">
+              <DatePicker
+                value={fromDate}
+                onChange={(val) => { setFromDate(val); setPreset("custom"); }}
+              />
+            </div>
+            <span className="text-gray-400 text-xs font-medium">đến</span>
+            <div className="flex-1 sm:w-[130px]">
+              <DatePicker
+                value={toDate}
+                onChange={(val) => { setToDate(val); setPreset("custom"); }}
+              />
+            </div>
+            <button
+              onClick={() => void dashboardQuery.refetch()}
+              className="hidden sm:flex p-2 w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all items-center justify-center shadow-sm"
+            >
+              <RefreshCw size={16} className={dashboardQuery.isFetching ? "animate-spin" : ""} />
+            </button>
           </div>
-          <button
-            onClick={() => void dashboardQuery.refetch()}
-            className="p-2 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all flex items-center justify-center"
-          >
-            <RefreshCw size={14} className={dashboardQuery.isFetching ? "animate-spin" : ""} />
-          </button>
         </div>
       </div>
 
