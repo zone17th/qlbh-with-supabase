@@ -116,7 +116,7 @@ export function ShippingProvidersPage() {
       <DataState loading={loading} error={null} empty={false}>
         <div className="grid grid-cols-1 xl:grid-cols-[0.9fr_1.4fr] gap-6">
           {/* Form */}
-          <div className="bg-white rounded-2xl shadow-soft-md border border-gray-100 p-6">
+          <div className="bg-white rounded-2xl shadow-soft-md border border-gray-100 p-6 min-w-0">
             <div className="mb-6 pb-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">{form.id ? "Cập nhật đơn vị giao hàng" : "Tạo đơn vị giao hàng mới"}</h2>
               <p className="text-gray-600 text-sm mt-1">Thông tin đơn vị giao hàng và shipper</p>
@@ -188,7 +188,7 @@ export function ShippingProvidersPage() {
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto shadow-soft-sm">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto shadow-soft-sm min-w-0">
             <table className="min-w-[600px] w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
