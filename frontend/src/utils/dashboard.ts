@@ -1,10 +1,8 @@
-import type { Order } from "../../types/models";
+import type { Order, TopProduct } from "../types/models";
 
-export interface TopProduct {
-  name: string;
-  revenue: number;
-}
-
+/**
+ * Calculates top products based on revenue from a list of orders.
+ */
 export function deriveTopProducts(orders: Order[], limit = 5): TopProduct[] {
   const totals = new Map<string, number>();
 

@@ -4,7 +4,7 @@ import { CatalogPage } from "../pages/CatalogPage";
 import { InventoryPage } from "../pages/InventoryPage";
 import { OrdersPage } from "../pages/OrdersPage";
 import { ShippingProvidersPage } from "../pages/ShippingProvidersPage";
-import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { DashboardPage } from "../pages/DashboardPage";
 
 export function AppRoutes() {
   const location = useLocation();

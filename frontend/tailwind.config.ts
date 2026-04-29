@@ -5,29 +5,31 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#111827",
-        muted: "#6b7280",
+        ink: "#2C2C2A", // Text chính
+        muted: "#5F5E5A", // Text phụ
         surface: "#ffffff",
-        canvas: "#f9fafb",
+        canvas: "#F8F7F5", // Surface/Canvas
         brand: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          800: "#1e40af",
-          900: "#1e3a5f",
+          50: "#F8F7F5",
+          100: "#FAE8D8", // Light tint
+          200: "#fce3b4",
+          300: "#f9c884",
+          400: "#F4A460", // Secondary
+          500: "#E35336", // Primary CTA
+          600: "#E35336", 
+          700: "#c2422a",
+          800: "#A0522D", // Dark accent
+          900: "#7d3e23",
         },
-        accent: "#f0b35a",
+        accent: "#F4A460",
+        divider: "#F1EFE8",
+        disabled: "#B4B2A9",
       },
       boxShadow: {
-        panel: "0 1px 2px rgb(15 23 42 / 0.05)",
-        "soft-md": "0 4px 8px 0 rgb(0 0 0 / 0.1)",
-        "soft-lg": "0 8px 16px 0 rgb(0 0 0 / 0.15)",
-        "soft-sm": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        panel: "0 1px 2px rgb(44 44 42 / 0.05)",
+        "soft-md": "0 4px 12px 0 rgb(160 82 45 / 0.08)",
+        "soft-lg": "0 12px 24px 0 rgb(160 82 45 / 0.12)",
+        "soft-sm": "0 2px 4px 0 rgb(160 82 45 / 0.04)",
       },
       fontFamily: {
         sans: [

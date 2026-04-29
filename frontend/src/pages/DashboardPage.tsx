@@ -16,7 +16,7 @@ import {
   Activity,
   TableProperties,
 } from "lucide-react";
-import { DatePicker } from "../../components/DatePicker";
+import { DatePicker } from "../components/DatePicker";
 import { useState } from "react";
 import {
   AreaChart,
@@ -35,9 +35,9 @@ import {
   Line,
   ComposedChart,
 } from "recharts";
-import { daysAgoIsoDate, todayIsoDate } from "../../utils/date";
-import { formatMoney, formatNumber } from "../../utils/format";
-import { useDashboardSummary } from "./hooks";
+import { daysAgoIsoDate, todayIsoDate } from "../utils/date";
+import { formatMoney, formatNumber } from "../utils/format";
+import { useDashboardSummary } from "../hooks/useDashboardSummary";
 
 const CHART_COLORS = [
   "#3b82f6",
@@ -104,10 +104,10 @@ export function DashboardPage() {
       {/* ═══ Header Row ═══ */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-ink tracking-tight">
             Dashboard
           </h1>
-          <p className="mt-1 text-xs md:text-sm text-gray-500">
+          <p className="mt-1 text-xs md:text-sm text-muted">
             Tổng quan kinh doanh — cập nhật theo thời gian thực
           </p>
         </div>
@@ -115,18 +115,18 @@ export function DashboardPage() {
         {/* Date range controls */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <span className="hidden sm:flex items-center justify-center text-gray-400 bg-white w-9 h-9 rounded-lg border border-gray-200 shadow-sm">
+            <span className="hidden sm:flex items-center justify-center text-disabled bg-white w-9 h-9 rounded-lg border border-divider shadow-sm">
               <CalendarDays size={16} />
             </span>
-            <div className="flex bg-gray-100 p-1 rounded-lg flex-1 sm:flex-none">
+            <div className="flex bg-brand-100/40 p-1 rounded-lg flex-1 sm:flex-none">
               {["7", "30", "90"].map((val) => (
                 <button
                   key={val}
                   onClick={() => onPresetChange(val)}
                   className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
                     preset === val
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
+                      ? "bg-white text-brand-600 shadow-sm"
+                      : "text-muted hover:text-ink/80"
                   }`}
                 >
                   {val}D
@@ -135,7 +135,7 @@ export function DashboardPage() {
             </div>
             <button
               onClick={() => void dashboardQuery.refetch()}
-              className="p-2 w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all flex sm:hidden items-center justify-center shadow-sm"
+              className="p-2 w-9 h-9 rounded-lg bg-white border border-divider text-muted hover:text-brand-600 hover:border-brand-300 transition-all flex sm:hidden items-center justify-center shadow-sm"
             >
               <RefreshCw size={16} className={dashboardQuery.isFetching ? "animate-spin" : ""} />
             </button>
@@ -148,7 +148,7 @@ export function DashboardPage() {
                 onChange={(val) => { setFromDate(val); setPreset("custom"); }}
               />
             </div>
-            <span className="text-gray-400 text-xs font-medium">đến</span>
+            <span className="text-disabled text-xs font-medium">đến</span>
             <div className="flex-1 sm:w-[130px]">
               <DatePicker
                 value={toDate}
@@ -157,7 +157,7 @@ export function DashboardPage() {
             </div>
             <button
               onClick={() => void dashboardQuery.refetch()}
-              className="hidden sm:flex p-2 w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-all items-center justify-center shadow-sm"
+              className="hidden sm:flex p-2 w-9 h-9 rounded-lg bg-white border border-divider text-muted hover:text-brand-600 hover:border-brand-300 transition-all items-center justify-center shadow-sm"
             >
               <RefreshCw size={16} className={dashboardQuery.isFetching ? "animate-spin" : ""} />
             </button>
@@ -184,8 +184,8 @@ export function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
             <KpiCard
               icon={<ShoppingCart size={20} />}
-              iconClass="bg-blue-500/10 text-blue-600"
-              borderClass="border-l-blue-500"
+              iconClass="bg-brand-500/10 text-brand-600"
+              borderClass="border-l-brand-500"
               label="Tổng đơn hàng"
               value={formatNumber(summary.totalOrders)}
               sub={`${summary.shippedOrders} đã giao · ${summary.cancelledOrders ?? 0} hủy`}
@@ -224,15 +224,15 @@ export function DashboardPage() {
           {/* ═══ Charts Row 1 : Revenue area + Order status donut ═══ */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
             {/* Revenue / Profit area chart */}
-            <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-soft-md p-6">
+            <div className="xl:col-span-2 bg-white rounded-2xl border border-divider shadow-soft-md p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <Activity size={18} className="text-blue-500" />
-                  <h3 className="font-bold text-gray-900">Doanh thu & Lợi nhuận</h3>
+                  <Activity size={18} className="text-brand-500" />
+                  <h3 className="font-bold text-ink">Doanh thu & Lợi nhuận</h3>
                 </div>
                 <div className="flex gap-4 text-xs">
                   <span className="flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-brand-500" />
                     Doanh thu
                   </span>
                   <span className="flex items-center gap-1">
@@ -270,10 +270,10 @@ export function DashboardPage() {
             </div>
 
             {/* Order status donut */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-soft-md p-6">
+            <div className="bg-white rounded-2xl border border-divider shadow-soft-md p-6">
               <div className="flex items-center gap-2 mb-4">
                 <PieChartIcon size={18} className="text-violet-500" />
-                <h3 className="font-bold text-gray-900">Trạng thái đơn</h3>
+                <h3 className="font-bold text-ink">Trạng thái đơn</h3>
               </div>
               <div className="h-52">
                 <ResponsiveContainer width="100%" height="100%">
@@ -300,10 +300,10 @@ export function DashboardPage() {
               {/* Mini stats */}
               <div className="grid grid-cols-2 gap-3 mt-4">
                 {statusData.map((s) => (
-                  <div key={s.name} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
+                  <div key={s.name} className="flex items-center gap-2 p-2 rounded-lg bg-canvas">
                     <span className="w-2 h-2 rounded-full" style={{ background: s.color }} />
-                    <span className="text-xs text-gray-600">{s.name}</span>
-                    <span className="ml-auto text-xs font-bold text-gray-800">{s.value}</span>
+                    <span className="text-xs text-muted">{s.name}</span>
+                    <span className="ml-auto text-xs font-bold text-ink">{s.value}</span>
                   </div>
                 ))}
               </div>
@@ -313,13 +313,13 @@ export function DashboardPage() {
           {/* ═══ Charts Row 2 : Category bar chart + Top products ═══ */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
             {/* Category revenue bar */}
-            <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-soft-md p-6">
+            <div className="xl:col-span-2 bg-white rounded-2xl border border-divider shadow-soft-md p-6">
               <div className="flex items-center gap-2 mb-6">
                 <BarChart3 size={18} className="text-cyan-500" />
-                <h3 className="font-bold text-gray-900">Doanh thu theo danh mục</h3>
+                <h3 className="font-bold text-ink">Doanh thu theo danh mục</h3>
               </div>
               {categoryChartData.length === 0 ? (
-                <div className="flex items-center justify-center h-56 text-sm text-gray-400">
+                <div className="flex items-center justify-center h-56 text-sm text-disabled">
                   Chưa có doanh thu danh mục
                 </div>
               ) : (
@@ -342,13 +342,13 @@ export function DashboardPage() {
             </div>
 
             {/* Top products ranking */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-soft-md p-6">
+            <div className="bg-white rounded-2xl border border-divider shadow-soft-md p-6">
               <div className="flex items-center gap-2 mb-5">
                 <TrendingUp size={18} className="text-amber-500" />
-                <h3 className="font-bold text-gray-900">Top sản phẩm</h3>
+                <h3 className="font-bold text-ink">Top sản phẩm</h3>
               </div>
               {topProducts.length === 0 ? (
-                <div className="flex items-center justify-center h-40 text-sm text-gray-400">
+                <div className="flex items-center justify-center h-40 text-sm text-disabled">
                   Chưa có dữ liệu
                 </div>
               ) : (
@@ -364,22 +364,22 @@ export function DashboardPage() {
                               i === 0
                                 ? "bg-gradient-to-br from-amber-400 to-amber-600"
                                 : i === 1
-                                  ? "bg-gradient-to-br from-gray-300 to-gray-500"
+                                  ? "bg-gradient-to-br from-disabled to-muted"
                                   : i === 2
                                     ? "bg-gradient-to-br from-orange-300 to-orange-500"
-                                    : "bg-gray-200 text-gray-600"
+                                    : "bg-brand-100/50 text-muted"
                             }`}
                           >
                             {i + 1}
                           </span>
-                          <p className="flex-1 text-sm font-medium text-gray-800 truncate group-hover:text-blue-600 transition-colors">
+                          <p className="flex-1 text-sm font-medium text-ink truncate group-hover:text-brand-600 transition-colors">
                             {product.name}
                           </p>
-                          <span className="text-xs font-bold text-gray-900 whitespace-nowrap">
+                          <span className="text-xs font-bold text-ink whitespace-nowrap">
                             {formatMoney(product.revenue)}
                           </span>
                         </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden ml-10">
+                        <div className="h-1.5 bg-brand-100/40 rounded-full overflow-hidden ml-10">
                           <div
                             className="h-full rounded-full transition-all duration-700"
                             style={{
@@ -421,20 +421,20 @@ function DailyStatsChart({
   const [view, setView] = useState<"chart" | "table">("chart");
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-soft-md overflow-hidden">
-      <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-100">
-        <CalendarDays size={18} className="text-blue-500" />
-        <h3 className="font-bold text-gray-900">Chi tiết theo ngày</h3>
-        <span className="text-xs text-gray-400 ml-1">{dailyChartData.length} ngày</span>
+    <div className="bg-white rounded-2xl border border-divider shadow-soft-md overflow-hidden">
+      <div className="flex items-center gap-2 px-6 py-4 border-b border-divider">
+        <CalendarDays size={18} className="text-brand-500" />
+        <h3 className="font-bold text-ink">Chi tiết theo ngày</h3>
+        <span className="text-xs text-disabled ml-1">{dailyChartData.length} ngày</span>
 
         {/* View toggle */}
-        <div className="ml-auto flex items-center bg-gray-100 rounded-lg p-0.5">
+        <div className="ml-auto flex items-center bg-brand-100/40 rounded-lg p-0.5">
           <button
             onClick={() => setView("chart")}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
               view === "chart"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-brand-600 shadow-sm"
+                : "text-muted hover:text-ink/80"
             }`}
           >
             <BarChart3 size={13} />
@@ -444,8 +444,8 @@ function DailyStatsChart({
             onClick={() => setView("table")}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
               view === "table"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-brand-600 shadow-sm"
+                : "text-muted hover:text-ink/80"
             }`}
           >
             <TableProperties size={13} />
@@ -457,7 +457,7 @@ function DailyStatsChart({
       {view === "chart" ? (
         <div className="p-6">
           {dailyChartData.length === 0 ? (
-            <div className="flex items-center justify-center h-56 text-sm text-gray-400">
+            <div className="flex items-center justify-center h-56 text-sm text-disabled">
               Không có dữ liệu trong khoảng thời gian này
             </div>
           ) : (
@@ -465,7 +465,7 @@ function DailyStatsChart({
               {/* Legend */}
               <div className="flex flex-wrap gap-4 text-xs mb-4">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm bg-blue-500" />
+                  <span className="w-3 h-3 rounded-sm bg-brand-500" />
                   Doanh thu
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -590,33 +590,33 @@ function DailyStatsChart({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50/80">
-                <th className="px-6 py-3 text-left font-bold text-gray-600 uppercase tracking-wider text-xs">Ngày</th>
-                <th className="px-6 py-3 text-right font-bold text-gray-600 uppercase tracking-wider text-xs">Doanh thu</th>
-                <th className="px-6 py-3 text-right font-bold text-gray-600 uppercase tracking-wider text-xs">Chi phí</th>
-                <th className="px-6 py-3 text-right font-bold text-gray-600 uppercase tracking-wider text-xs">Lợi nhuận</th>
-                <th className="px-6 py-3 text-center font-bold text-gray-600 uppercase tracking-wider text-xs">Đơn</th>
-                <th className="px-6 py-3 text-center font-bold text-gray-600 uppercase tracking-wider text-xs">Đã giao</th>
+              <tr className="bg-canvas/80">
+                <th className="px-6 py-3 text-left font-bold text-muted uppercase tracking-wider text-xs">Ngày</th>
+                <th className="px-6 py-3 text-right font-bold text-muted uppercase tracking-wider text-xs">Doanh thu</th>
+                <th className="px-6 py-3 text-right font-bold text-muted uppercase tracking-wider text-xs">Chi phí</th>
+                <th className="px-6 py-3 text-right font-bold text-muted uppercase tracking-wider text-xs">Lợi nhuận</th>
+                <th className="px-6 py-3 text-center font-bold text-muted uppercase tracking-wider text-xs">Đơn</th>
+                <th className="px-6 py-3 text-center font-bold text-muted uppercase tracking-wider text-xs">Đã giao</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-divider">
               {dailyChartData.map((row) => (
-                <tr key={row.date} className="hover:bg-blue-50/40 transition-colors">
-                  <td className="px-6 py-3.5 font-medium text-gray-800">{row.date}</td>
-                  <td className="px-6 py-3.5 text-right text-gray-700">{formatMoney(row.revenue)}</td>
-                  <td className="px-6 py-3.5 text-right text-gray-500">{formatMoney(row.cost)}</td>
+                <tr key={row.date} className="hover:bg-brand-50/40 transition-colors">
+                  <td className="px-6 py-3.5 font-medium text-ink">{row.date}</td>
+                  <td className="px-6 py-3.5 text-right text-ink/80">{formatMoney(row.revenue)}</td>
+                  <td className="px-6 py-3.5 text-right text-muted">{formatMoney(row.cost)}</td>
                   <td className="px-6 py-3.5 text-right">
                     <span className={row.profit >= 0 ? "text-emerald-600 font-semibold" : "text-red-600 font-semibold"}>
                       {formatMoney(row.profit)}
                     </span>
                   </td>
-                  <td className="px-6 py-3.5 text-center text-gray-700">{row.orderCount}</td>
-                  <td className="px-6 py-3.5 text-center text-gray-700">{row.shippedOrders}</td>
+                  <td className="px-6 py-3.5 text-center text-ink/80">{row.orderCount}</td>
+                  <td className="px-6 py-3.5 text-center text-ink/80">{row.shippedOrders}</td>
                 </tr>
               ))}
               {dailyChartData.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-8 text-center text-disabled">
                     Không có dữ liệu trong khoảng thời gian này
                   </td>
                 </tr>
@@ -649,7 +649,7 @@ function KpiCard({
 }) {
   return (
     <div
-      className={`relative bg-white rounded-2xl border border-gray-100 shadow-soft-md p-5 border-l-4 ${borderClass} transition-all hover:shadow-soft-lg group`}
+      className={`relative bg-white rounded-2xl border border-divider shadow-soft-md p-5 border-l-4 ${borderClass} transition-all hover:shadow-soft-lg group`}
     >
       <div className="flex items-start justify-between">
         <div className={`p-2.5 rounded-xl ${iconClass}`}>{icon}</div>
@@ -666,9 +666,9 @@ function KpiCard({
           </span>
         )}
       </div>
-      <p className="mt-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
-      <p className="mt-1 text-2xl font-extrabold text-gray-900 tracking-tight">{value}</p>
-      {sub && <p className="mt-2 text-xs text-gray-400">{sub}</p>}
+      <p className="mt-3 text-xs font-semibold text-disabled uppercase tracking-wider">{label}</p>
+      <p className="mt-1 text-2xl font-extrabold text-ink tracking-tight">{value}</p>
+      {sub && <p className="mt-2 text-xs text-disabled">{sub}</p>}
     </div>
   );
 }
@@ -679,16 +679,16 @@ function DashboardSkeleton() {
     <div className="space-y-5 animate-pulse">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 h-36">
-            <div className="h-10 w-10 bg-gray-100 rounded-xl mb-3" />
-            <div className="h-3 w-20 bg-gray-100 rounded mb-2" />
-            <div className="h-6 w-28 bg-gray-100 rounded" />
+          <div key={i} className="bg-white rounded-2xl border border-divider p-5 h-36">
+            <div className="h-10 w-10 bg-brand-100/40 rounded-xl mb-3" />
+            <div className="h-3 w-20 bg-brand-100/40 rounded mb-2" />
+            <div className="h-6 w-28 bg-brand-100/40 rounded" />
           </div>
         ))}
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 h-80" />
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 h-80" />
+        <div className="xl:col-span-2 bg-white rounded-2xl border border-divider p-6 h-80" />
+        <div className="bg-white rounded-2xl border border-divider p-6 h-80" />
       </div>
     </div>
   );

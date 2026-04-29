@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { dashboardApi } from "./api";
-import { deriveTopProducts } from "./model";
+import { dashboardService } from "../services/dashboardService";
+import { deriveTopProducts } from "../utils/dashboard";
 
 export function useDashboardSummary(fromDate: string, toDate: string) {
   return useQuery({
     queryKey: ["dashboard", "summary", fromDate, toDate],
     queryFn: async () => {
       const [summary, orders] = await Promise.all([
-        dashboardApi.summary(fromDate, toDate),
-        dashboardApi.topProductSourceOrders(fromDate, toDate),
+        dashboardService.getSummary(fromDate, toDate),
+        dashboardService.getTopProductSourceOrders(fromDate, toDate),
       ]);
 
       return {

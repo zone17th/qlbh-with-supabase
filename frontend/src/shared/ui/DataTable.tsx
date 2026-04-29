@@ -24,7 +24,7 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   if (loading) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-5 text-sm text-gray-600">
+      <div className="rounded-lg border border-divider bg-white p-5 text-sm text-muted">
         Đang tải...
       </div>
     );
@@ -32,20 +32,20 @@ export function DataTable<T>({
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-300 bg-white p-5 text-sm text-gray-600">
+      <div className="rounded-lg border border-dashed border-divider bg-white p-5 text-sm text-muted">
         {emptyText}
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-soft-sm">
+    <div className="overflow-x-auto rounded-xl border border-divider bg-white shadow-soft-sm">
       <table className="min-w-full border-collapse text-sm">
-        <thead className="bg-gray-50 border-b border-gray-200">
+        <thead className="bg-canvas border-b border-divider">
           <tr>
             {columns.map((column) => (
               <th
-                className={column.className ?? "px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider text-xs"}
+                className={column.className ?? "px-6 py-3 text-left font-bold text-ink/80 uppercase tracking-wider text-xs"}
                 key={column.key}
               >
                 {column.header}
@@ -53,11 +53,11 @@ export function DataTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-divider">
           {rows.map((row, rowIndex) => (
-            <tr className="hover:bg-gray-50 transition-colors" key={getRowKey?.(row, rowIndex) ?? rowIndex}>
+            <tr className="hover:bg-canvas transition-colors" key={getRowKey?.(row, rowIndex) ?? rowIndex}>
               {columns.map((column) => (
-                <td className={column.className ?? "px-6 py-4 text-gray-700"} key={column.key}>
+                <td className={column.className ?? "px-6 py-4 text-ink/80"} key={column.key}>
                   {column.cell(row)}
                 </td>
               ))}

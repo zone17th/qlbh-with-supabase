@@ -106,24 +106,24 @@ export function ShippingProvidersPage() {
       {/* Page Header */}
       {/* Page Header */}
       <div className="mb-4">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Đơn vị giao hàng</h1>
-        <p className="mt-1 text-xs md:text-sm text-gray-500">Đơn vị giao hàng và danh sách shipper.</p>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-ink tracking-tight">Đơn vị giao hàng</h1>
+        <p className="mt-1 text-xs md:text-sm text-muted">Đơn vị giao hàng và danh sách shipper.</p>
       </div>
 
       {/* Search */}
       <div className="bg-white rounded-lg shadow-soft-md p-4 md:p-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <div className="flex flex-col md:col-span-2">
-            <label className="text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
+            <label className="text-sm font-medium text-ink/80 mb-1">Tìm kiếm</label>
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void load()}
               placeholder="Tên đơn vị..."
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-divider rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
             />
           </div>
-          <button onClick={() => void load()} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20 whitespace-nowrap">
+          <button onClick={() => void load()} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-600 text-white rounded-lg font-bold text-sm hover:bg-brand-700 transition-all shadow-md shadow-brand-500/20 whitespace-nowrap">
             <Search size={16} /> Tìm kiếm
           </button>
         </div>
@@ -135,38 +135,38 @@ export function ShippingProvidersPage() {
       <DataState loading={loading} error={null} empty={false}>
         <div className="grid grid-cols-1 xl:grid-cols-[0.9fr_1.4fr] gap-6">
           {/* Form */}
-          <div className="bg-white rounded-2xl shadow-soft-md border border-gray-100 p-6 min-w-0">
-            <div className="mb-6 pb-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">{form.id ? "Cập nhật đơn vị giao hàng" : "Tạo đơn vị giao hàng mới"}</h2>
-              <p className="text-gray-600 text-sm mt-1">Thông tin đơn vị giao hàng và shipper</p>
+          <div className="bg-white rounded-2xl shadow-soft-md border border-divider p-6 min-w-0">
+            <div className="mb-6 pb-4 border-b border-divider">
+              <h2 className="text-xl font-semibold text-ink">{form.id ? "Cập nhật đơn vị giao hàng" : "Tạo đơn vị giao hàng mới"}</h2>
+              <p className="text-muted text-sm mt-1">Thông tin đơn vị giao hàng và shipper</p>
             </div>
             <div className="space-y-4">
               <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-2 required-label">Tên đơn vị giao hàng</label>
+                <label className="text-sm font-medium text-ink/80 mb-2 required-label">Tên đơn vị giao hàng</label>
                 <input
                   value={form.providerName}
                   onChange={(e) => setForm({ ...form, providerName: e.target.value })}
                   placeholder="Nhập tên đơn vị giao hàng..."
-                  className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors.providerName ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                  className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 h-[38px] ${fieldErrors.providerName ? "border-red-400 focus:ring-red-500" : "border-divider"}`}
                 />
                 {fieldErrors.providerName && <div className="text-red-500 text-xs mt-1">{fieldErrors.providerName}</div>}
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 required-label">Shipper</label>
+                  <label className="text-sm font-medium text-ink/80 required-label">Shipper</label>
                   <button
                     onClick={() => setForm({ ...form, shippers: [...form.shippers, { shipperName: "", shipperPhone: "" }] })}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-white border border-divider text-brand-600 rounded-lg text-xs font-bold hover:bg-brand-50 hover:border-brand-200 transition-colors"
                   >
                     <Plus size={14} /> Thêm shipper
                   </button>
                 </div>
-                <div className="space-y-2 bg-gray-50 p-4 rounded-xl border border-gray-200/50">
+                <div className="space-y-2 bg-canvas p-4 rounded-xl border border-divider/50">
                   {form.shippers.length > 0 && (
                     <div className="hidden md:flex gap-2 items-center px-1 mb-1">
-                      <div className="flex-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên shipper</div>
-                      <div className="flex-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Số điện thoại</div>
+                      <div className="flex-1 text-xs font-semibold text-muted uppercase tracking-wider">Tên shipper</div>
+                      <div className="flex-1 text-xs font-semibold text-muted uppercase tracking-wider">Số điện thoại</div>
                       <div className="w-[34px]"></div>
                     </div>
                   )}
@@ -179,7 +179,7 @@ export function ShippingProvidersPage() {
                             placeholder="Tên shipper"
                             value={shipper.shipperName}
                             onChange={(e) => { const next = [...form.shippers]; next[index] = { ...shipper, shipperName: e.target.value }; setForm({ ...form, shippers: next }); }}
-                            className={`w-full min-w-0 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors[`shipper_${index}_name`] ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                            className={`w-full min-w-0 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 h-[38px] ${fieldErrors[`shipper_${index}_name`] ? "border-red-400 focus:ring-red-500" : "border-divider"}`}
                           />
                           {fieldErrors[`shipper_${index}_name`] && <div className="text-red-500 text-[10px] mt-1">{fieldErrors[`shipper_${index}_name`]}</div>}
                         </div>
@@ -188,7 +188,7 @@ export function ShippingProvidersPage() {
                             placeholder="Số điện thoại"
                             value={shipper.shipperPhone}
                             onChange={(e) => { const next = [...form.shippers]; next[index] = { ...shipper, shipperPhone: e.target.value }; setForm({ ...form, shippers: next }); }}
-                            className={`w-full min-w-0 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors[`shipper_${index}_phone`] ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                            className={`w-full min-w-0 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 h-[38px] ${fieldErrors[`shipper_${index}_phone`] ? "border-red-400 focus:ring-red-500" : "border-divider"}`}
                           />
                           {fieldErrors[`shipper_${index}_phone`] && <div className="text-red-500 text-[10px] mt-1">{fieldErrors[`shipper_${index}_phone`]}</div>}
                         </div>
@@ -204,11 +204,11 @@ export function ShippingProvidersPage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-100">
-                <button onClick={() => void submit()} className="flex items-center justify-center gap-2 flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20 whitespace-nowrap">
+              <div className="flex flex-wrap gap-3 pt-4 border-t border-divider">
+                <button onClick={() => void submit()} className="flex items-center justify-center gap-2 flex-1 sm:flex-none px-6 py-2.5 bg-brand-600 text-white rounded-lg font-bold text-sm hover:bg-brand-700 transition-all shadow-md shadow-brand-500/20 whitespace-nowrap">
                   <Save size={16} /> {form.id ? "Cập nhật đơn vị" : "Tạo đơn vị"}
                 </button>
-                <button onClick={() => setForm(emptyForm)} className="flex items-center justify-center gap-2 flex-1 sm:flex-none px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all whitespace-nowrap">
+                <button onClick={() => setForm(emptyForm)} className="flex items-center justify-center gap-2 flex-1 sm:flex-none px-6 py-2.5 bg-brand-100/40 text-ink/80 rounded-lg font-bold text-sm hover:bg-brand-100 transition-all whitespace-nowrap">
                   <RefreshCw size={16} /> Làm mới
                 </button>
               </div>
@@ -216,23 +216,23 @@ export function ShippingProvidersPage() {
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto shadow-soft-sm min-w-0">
+          <div className="bg-white rounded-xl border border-divider overflow-x-auto shadow-soft-sm min-w-0">
             <table className="min-w-[600px] w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-canvas border-b border-divider">
                 <tr>
-                  <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Đơn vị giao hàng</th>
-                  <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Shipper</th>
-                  <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
+                  <th className="px-6 py-3 text-left font-bold text-ink/80 uppercase tracking-wider">Đơn vị giao hàng</th>
+                  <th className="px-6 py-3 text-left font-bold text-ink/80 uppercase tracking-wider">Shipper</th>
+                  <th className="px-6 py-3 text-center font-bold text-ink/80 uppercase tracking-wider">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-divider">
                 {providers.map((provider) => (
-                  <tr key={provider.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-gray-900">{provider.providerName}</td>
+                  <tr key={provider.id} className="hover:bg-canvas transition-colors">
+                    <td className="px-6 py-4 font-bold text-ink">{provider.providerName}</td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {provider.shippers.map((shipper) => (
-                          <span key={shipper.id} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs border border-blue-100">
+                          <span key={shipper.id} className="px-2 py-0.5 bg-brand-50 text-brand-700 rounded text-xs border border-brand-100">
                             {shipper.shipperName} ({shipper.shipperPhone})
                           </span>
                         ))}
@@ -240,7 +240,7 @@ export function ShippingProvidersPage() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => edit(provider)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
+                        <button onClick={() => edit(provider)} className="p-1.5 bg-brand-50 text-brand-600 rounded hover:bg-brand-100 transition-colors">✏️</button>
                         <button onClick={() => void remove(provider.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"><Trash2 size={16} /></button>
                       </div>
                     </td>

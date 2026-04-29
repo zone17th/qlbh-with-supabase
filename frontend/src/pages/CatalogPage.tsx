@@ -210,8 +210,8 @@ export function CatalogPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="mb-4">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">Quản lý Sản phẩm & Danh mục</h1>
-        <p className="mt-1 text-xs md:text-sm text-gray-500">Quản lý danh mục sản phẩm, thông tin sản phẩm và phân loại</p>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-ink tracking-tight">Quản lý Sản phẩm & Danh mục</h1>
+        <p className="mt-1 text-xs md:text-sm text-muted">Quản lý danh mục sản phẩm, thông tin sản phẩm và phân loại</p>
       </div>
 
       {/* Error */}
@@ -220,16 +220,16 @@ export function CatalogPage() {
       )}
 
       {/* Tabs Card */}
-      <div className="bg-white rounded-2xl shadow-soft-md border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-soft-md border border-divider overflow-hidden">
         {/* Segmented Tabs */}
-        <div className="flex p-1.5 bg-gray-100/50 m-4 rounded-xl border border-gray-200/50">
+        <div className="flex p-1.5 bg-brand-100/30 m-4 rounded-xl border border-divider/50">
           <button
             type="button"
             onClick={() => { setTab("PRODUCT"); setHasSubmittedProduct(false); setHasSubmittedCategory(false); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-bold rounded-lg transition-all focus:outline-none ${
               tab === "PRODUCT"
-                ? "bg-white shadow-soft-sm text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white shadow-soft-sm text-brand-600"
+                : "text-muted hover:text-ink/80"
             }`}
           >
             <span className="text-lg">📦</span> Sản phẩm
@@ -239,8 +239,8 @@ export function CatalogPage() {
             onClick={() => { setTab("CATEGORY"); setHasSubmittedProduct(false); setHasSubmittedCategory(false); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-bold rounded-lg transition-all focus:outline-none ${
               tab === "CATEGORY"
-                ? "bg-white shadow-soft-sm text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-white shadow-soft-sm text-brand-600"
+                : "text-muted hover:text-ink/80"
             }`}
           >
             <span className="text-lg">🏷️</span> Danh mục
@@ -252,31 +252,31 @@ export function CatalogPage() {
               <div className="space-y-8">
                 {/* Product Form Section */}
                 <div className="bg-white rounded-lg shadow-soft-md p-6 mb-6">
-                  <div className="mb-6 pb-4 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">
+                  <div className="mb-6 pb-4 border-b border-divider">
+                    <h2 className="text-xl font-semibold text-ink">
                       {productForm.id ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}
                     </h2>
-                    <p className="text-gray-600 text-sm mt-1">Quản lý thông tin và các phiên bản sản phẩm</p>
+                    <p className="text-muted text-sm mt-1">Quản lý thông tin và các phiên bản sản phẩm</p>
                   </div>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-2 required-label">Tên sản phẩm</label>
+                        <label className="text-sm font-medium text-ink/80 mb-2 required-label">Tên sản phẩm</label>
                         <input
                           type="text"
                           value={productForm.name}
                           onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                           placeholder="Nhập tên sản phẩm"
-                          className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px] ${fieldErrors.name ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                          className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition-colors h-[38px] ${fieldErrors.name ? "border-red-400 focus:ring-red-500" : "border-divider"}`}
                         />
                         {fieldErrors.name && <div className="text-red-500 text-xs mt-1">{fieldErrors.name}</div>}
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-2 required-label">Danh mục</label>
+                        <label className="text-sm font-medium text-ink/80 mb-2 required-label">Danh mục</label>
                         <select
                           value={productForm.categoryId}
                           onChange={(e) => setProductForm({ ...productForm, categoryId: Number(e.target.value) })}
-                          className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px] ${fieldErrors.categoryId ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                          className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition-colors h-[38px] ${fieldErrors.categoryId ? "border-red-400 focus:ring-red-500" : "border-divider"}`}
                         >
                           <option value={0}>Chọn danh mục</option>
                           {categoryOptions.map((cat) => (
@@ -286,45 +286,45 @@ export function CatalogPage() {
                         {fieldErrors.categoryId && <div className="text-red-500 text-xs mt-1">{fieldErrors.categoryId}</div>}
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-2 required-label">Bảo hành (tháng)</label>
+                        <label className="text-sm font-medium text-ink/80 mb-2 required-label">Bảo hành (tháng)</label>
                         <NumberInput
                           min={1}
                           value={productForm.warrantyMonths}
                           onChange={(val) => setProductForm({ ...productForm, warrantyMonths: val })}
                           placeholder="Số tháng bảo hành"
-                          className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px] ${fieldErrors.warrantyMonths ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                          className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition-colors h-[38px] ${fieldErrors.warrantyMonths ? "border-red-400 focus:ring-red-500" : "border-divider"}`}
                         />
                         {fieldErrors.warrantyMonths && <div className="text-red-500 text-xs mt-1">{fieldErrors.warrantyMonths}</div>}
                       </div>
                     </div>
 
                     <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
+                      <label className="text-sm font-medium text-ink/80 mb-2">Ghi chú</label>
                       <input
                         type="text"
                         value={productForm.note}
                         onChange={(e) => setProductForm({ ...productForm, note: e.target.value })}
                         placeholder="Ghi chú thêm (tùy chọn)"
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                        className="px-3 py-2 border border-divider rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 h-[38px]"
                       />
                     </div>
 
                     {/* Variants */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-gray-700 required-label">Phân loại sản phẩm</label>
+                        <label className="text-sm font-medium text-ink/80 required-label">Phân loại sản phẩm</label>
                         <button
                           type="button"
                           onClick={() => setProductForm({ ...productForm, variants: [...productForm.variants, { variantName: "" }] })}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-white border border-divider text-brand-600 rounded-lg text-xs font-bold hover:bg-brand-50 hover:border-brand-200 transition-colors"
                         >
                           <Plus size={14} /> Thêm phân loại
                         </button>
                       </div>
-                      <div className="space-y-2 bg-gray-50 p-4 rounded-xl border border-gray-200/50">
+                      <div className="space-y-2 bg-canvas p-4 rounded-xl border border-divider/50">
                         {productForm.variants.length > 0 && (
                           <div className="hidden md:flex gap-2 items-center px-1 mb-1">
-                            <div className="flex-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tên phân loại (vd: Đen, 256GB, ...)</div>
+                            <div className="flex-1 text-xs font-semibold text-muted uppercase tracking-wider">Tên phân loại (vd: Đen, 256GB, ...)</div>
                             <div className="w-[34px]"></div>
                           </div>
                         )}
@@ -342,7 +342,7 @@ export function CatalogPage() {
                                     setProductForm({ ...productForm, variants: next });
                                   }}
                                   placeholder="Nhập phân loại"
-                                  className={`w-full min-w-0 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors[`variant_${index}_name`] ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                                  className={`w-full min-w-0 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 h-[38px] ${fieldErrors[`variant_${index}_name`] ? "border-red-400 focus:ring-red-500" : "border-divider"}`}
                                 />
                                 {fieldErrors[`variant_${index}_name`] && <div className="text-red-500 text-[10px] mt-1">{fieldErrors[`variant_${index}_name`]}</div>}
                               </div>
@@ -359,16 +359,16 @@ export function CatalogPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 pt-4 border-t border-gray-100">
+                    <div className="flex gap-3 pt-4 border-t border-divider">
                       <button
                         onClick={() => void submitProduct()}
-                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all shadow-md shadow-blue-500/20"
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-600 text-white rounded-lg font-bold text-sm hover:bg-brand-700 disabled:bg-disabled disabled:cursor-not-allowed transition-all shadow-md shadow-brand-500/20"
                       >
                         <Save size={16} /> {productForm.id ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
                       </button>
                       <button
                         onClick={() => { setProductForm(emptyProduct); setHasSubmittedProduct(false); setError(null); }}
-                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-100/40 text-ink/80 rounded-lg font-bold text-sm hover:bg-brand-100 transition-all"
                       >
                         <RefreshCw size={16} /> Làm mới
                       </button>
@@ -377,25 +377,25 @@ export function CatalogPage() {
                 </div>
 
                 {/* Search Filters */}
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-soft-sm">
-                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <div className="bg-white rounded-xl border border-divider overflow-hidden shadow-soft-sm">
+                  <div className="px-6 py-4 bg-canvas border-b border-divider">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-2">Tên sản phẩm</label>
+                        <label className="text-sm font-medium text-ink/80 mb-2">Tên sản phẩm</label>
                         <input
                           type="text"
                           value={keyword}
                           onChange={(e) => setKeyword(e.target.value)}
                           placeholder="Tìm kiếm theo tên sản phẩm..."
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-3 py-2 border border-divider rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                         />
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-2">Danh mục</label>
+                        <label className="text-sm font-medium text-ink/80 mb-2">Danh mục</label>
                         <select
                           value={filterCategoryId}
                           onChange={(e) => setFilterCategoryId(Number(e.target.value))}
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-3 py-2 border border-divider rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400"
                         >
                           <option value={0}>Tất cả danh mục</option>
                           {categoryOptions.map((cat) => (
@@ -407,13 +407,13 @@ export function CatalogPage() {
                     <div className="flex gap-3 pt-3">
                       <button
                         onClick={() => { if (productPage === 0) void loadProducts(); else setProductPage(0); }}
-                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20"
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-600 text-white rounded-lg font-bold text-sm hover:bg-brand-700 transition-all shadow-md shadow-brand-500/20"
                       >
                         <Search size={16} /> Tìm kiếm
                       </button>
                       <button
                         onClick={() => { setKeyword(""); setFilterCategoryId(0); if (productPage === 0) void loadProducts(true); else setProductPage(0); }}
-                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-100/40 text-ink/80 rounded-lg font-bold text-sm hover:bg-brand-100 transition-all"
                       >
                         <RefreshCw size={16} /> Làm mới
                       </button>
@@ -424,27 +424,27 @@ export function CatalogPage() {
                   <DataState loading={productLoading}>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm min-w-[600px]">
-                        <thead className="bg-gray-50 border-b border-gray-200">
+                        <thead className="bg-canvas border-b border-divider">
                           <tr>
-                            <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Sản phẩm</th>
-                            <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Danh mục</th>
-                            <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Phân loại</th>
-                            <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Bảo hành</th>
-                            <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
+                            <th className="px-6 py-3 text-left font-bold text-ink/80 uppercase tracking-wider">Sản phẩm</th>
+                            <th className="px-6 py-3 text-left font-bold text-ink/80 uppercase tracking-wider">Danh mục</th>
+                            <th className="px-6 py-3 text-left font-bold text-ink/80 uppercase tracking-wider">Phân loại</th>
+                            <th className="px-6 py-3 text-center font-bold text-ink/80 uppercase tracking-wider">Bảo hành</th>
+                            <th className="px-6 py-3 text-center font-bold text-ink/80 uppercase tracking-wider">Thao tác</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-divider">
                           {products.map((product) => (
-                            <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                            <tr key={product.id} className="hover:bg-canvas transition-colors">
                               <td className="px-6 py-4">
-                                <div className="font-bold text-gray-900">{product.name}</div>
-                                {product.note && <div className="text-xs text-gray-500 italic">{product.note}</div>}
+                                <div className="font-bold text-ink">{product.name}</div>
+                                {product.note && <div className="text-xs text-muted italic">{product.note}</div>}
                               </td>
-                              <td className="px-6 py-4 text-gray-600">{product.categoryName}</td>
+                              <td className="px-6 py-4 text-muted">{product.categoryName}</td>
                               <td className="px-6 py-4">
                                 <div className="flex flex-wrap gap-1">
                                   {product.variants.map((v) => (
-                                    <span key={v.variantName} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs border border-blue-100">
+                                    <span key={v.variantName} className="px-2 py-0.5 bg-brand-50 text-brand-700 rounded text-xs border border-brand-100">
                                       {v.variantName}
                                     </span>
                                   ))}
@@ -453,7 +453,7 @@ export function CatalogPage() {
                               <td className="px-6 py-4 text-center">{product.warrantyMonths} tháng</td>
                               <td className="px-6 py-4 text-center">
                                 <div className="flex justify-center gap-2">
-                                  <button onClick={() => editProduct(product)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
+                                  <button onClick={() => editProduct(product)} className="p-1.5 bg-brand-50 text-brand-600 rounded hover:bg-brand-100 transition-colors">✏️</button>
                                   <button onClick={() => void removeProduct(product.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"><Trash2 size={16} /></button>
                                 </div>
                               </td>
@@ -465,11 +465,11 @@ export function CatalogPage() {
                   </DataState>
 
                   {/* Pagination */}
-                  <div className="px-6 py-4 border-t border-gray-100 flex justify-center gap-4 bg-gray-50/50 items-center">
+                  <div className="px-6 py-4 border-t border-divider flex justify-center gap-4 bg-canvas/60 items-center">
                     <button
                       onClick={() => setProductPage(Math.max(0, productPage - 1))}
                       disabled={productPage <= 0}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 border border-divider text-ink/80 rounded-lg text-sm font-medium hover:bg-canvas disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       ← Trước
                     </button>
@@ -479,7 +479,7 @@ export function CatalogPage() {
                     <button
                       onClick={() => setProductPage(productPage + 1)}
                       disabled={productPage + 1 >= productTotalPages}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 border border-divider text-ink/80 rounded-lg text-sm font-medium hover:bg-canvas disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Sau →
                     </button>
@@ -490,46 +490,46 @@ export function CatalogPage() {
               <div className="space-y-8">
                 {/* Category Form */}
                 <div className="bg-white rounded-lg shadow-soft-md p-6 mb-6">
-                  <div className="mb-6 pb-4 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">
+                  <div className="mb-6 pb-4 border-b border-divider">
+                    <h2 className="text-xl font-semibold text-ink">
                       {categoryForm.id ? "Cập nhật danh mục" : "Thêm danh mục mới"}
                     </h2>
-                    <p className="text-gray-600 text-sm mt-1">Quản lý nhóm sản phẩm</p>
+                    <p className="text-muted text-sm mt-1">Quản lý nhóm sản phẩm</p>
                   </div>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-2 required-label">Tên danh mục</label>
+                        <label className="text-sm font-medium text-ink/80 mb-2 required-label">Tên danh mục</label>
                         <input
                           type="text"
                           value={categoryForm.name}
                           onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
                           placeholder="Nhập tên danh mục..."
-                          className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors.name ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                          className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 h-[38px] ${fieldErrors.name ? "border-red-400 focus:ring-red-500" : "border-divider"}`}
                         />
                         {fieldErrors.name && <div className="text-red-500 text-xs mt-1">{fieldErrors.name}</div>}
                       </div>
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-2">Mô tả</label>
+                        <label className="text-sm font-medium text-ink/80 mb-2">Mô tả</label>
                         <input
                           type="text"
                           value={categoryForm.description}
                           onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                           placeholder="Mô tả ngắn gọn"
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                          className="px-3 py-2 border border-divider rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 h-[38px]"
                         />
                       </div>
                     </div>
-                    <div className="flex gap-3 pt-4 border-t border-gray-100">
+                    <div className="flex gap-3 pt-4 border-t border-divider">
                       <button
                         onClick={() => void submitCategory()}
-                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all shadow-md shadow-blue-500/20"
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-600 text-white rounded-lg font-bold text-sm hover:bg-brand-700 disabled:bg-disabled disabled:cursor-not-allowed transition-all shadow-md shadow-brand-500/20"
                       >
                         <Save size={16} /> {categoryForm.id ? "Cập nhật danh mục" : "Thêm danh mục"}
                       </button>
                       <button
                         onClick={() => { setCategoryForm(emptyCategory); setHasSubmittedCategory(false); setError(null); }}
-                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-100/40 text-ink/80 rounded-lg font-bold text-sm hover:bg-brand-100 transition-all"
                       >
                         <RefreshCw size={16} /> Làm mới
                       </button>
@@ -539,24 +539,24 @@ export function CatalogPage() {
 
                 {/* Category Table */}
                 <DataState loading={categoryLoading}>
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-soft-sm">
+                <div className="bg-white rounded-xl border border-divider overflow-hidden shadow-soft-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm min-w-[500px]">
-                      <thead className="bg-gray-50 border-b border-gray-200">
+                      <thead className="bg-canvas border-b border-divider">
                         <tr>
-                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Tên danh mục</th>
-                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Mô tả</th>
-                          <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
+                          <th className="px-6 py-3 text-left font-bold text-ink/80 uppercase tracking-wider">Tên danh mục</th>
+                          <th className="px-6 py-3 text-left font-bold text-ink/80 uppercase tracking-wider">Mô tả</th>
+                          <th className="px-6 py-3 text-center font-bold text-ink/80 uppercase tracking-wider">Thao tác</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-divider">
                         {categories.map((cat) => (
-                          <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4 font-bold text-gray-900">{cat.name}</td>
-                            <td className="px-6 py-4 text-gray-600">{cat.description || "-"}</td>
+                          <tr key={cat.id} className="hover:bg-canvas transition-colors">
+                            <td className="px-6 py-4 font-bold text-ink">{cat.name}</td>
+                            <td className="px-6 py-4 text-muted">{cat.description || "-"}</td>
                             <td className="px-6 py-4 text-center">
                               <div className="flex justify-center gap-2">
-                                <button onClick={() => editCategory(cat)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
+                                <button onClick={() => editCategory(cat)} className="p-1.5 bg-brand-50 text-brand-600 rounded hover:bg-brand-100 transition-colors">✏️</button>
                                 <button onClick={() => void removeCategory(cat.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"><Trash2 size={16} /></button>
                               </div>
                             </td>
@@ -565,11 +565,11 @@ export function CatalogPage() {
                       </tbody>
                     </table>
                   </div>
-                  <div className="px-6 py-4 border-t border-gray-100 flex justify-center gap-4 bg-gray-50/50">
+                  <div className="px-6 py-4 border-t border-divider flex justify-center gap-4 bg-canvas/60">
                     <button
                       onClick={() => setCategoryPage(Math.max(0, categoryPage - 1))}
                       disabled={categoryPage <= 0}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 border border-divider text-ink/80 rounded-lg text-sm font-medium hover:bg-canvas disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       ← Trước
                     </button>
@@ -579,7 +579,7 @@ export function CatalogPage() {
                     <button
                       onClick={() => setCategoryPage(categoryPage + 1)}
                       disabled={categoryPage + 1 >= categoryTotalPages}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-4 py-2 border border-divider text-ink/80 rounded-lg text-sm font-medium hover:bg-canvas disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Sau →
                     </button>

@@ -32,10 +32,10 @@ export function DatePicker({ value, onChange, disabled, className = "", placehol
         locale={vi}
         disabled={disabled}
         placeholderText={placeholder}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className="w-full px-3 py-2 border border-divider rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:bg-brand-100/40 disabled:cursor-not-allowed"
         wrapperClassName="w-full"
       />
-      <Calendar size={16} className="absolute right-3 text-gray-400 pointer-events-none" />
+      <Calendar size={16} className="absolute right-3 text-disabled pointer-events-none" />
     </div>
   );
 }

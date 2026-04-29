@@ -194,3 +194,8 @@ export interface SaleRecord {
   note?: string | null;
   estimatedRevenue: number;
 }
+
+export interface TopProduct {
+  name: string;
+  revenue: number;
+}

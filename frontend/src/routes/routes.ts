@@ -7,7 +7,7 @@ import {
   Truck,
 } from "lucide-react";
 import type { ComponentType } from "react";
-import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { DashboardPage } from "../pages/DashboardPage";
 import { CatalogPage } from "../pages/CatalogPage";
 import { InventoryPage } from "../pages/InventoryPage";
 import { OrdersPage } from "../pages/OrdersPage";
