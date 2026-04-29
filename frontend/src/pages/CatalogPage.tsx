@@ -125,22 +125,6 @@ export function CatalogPage() {
     }
   }, [error]);
 
-  function validateProduct() {
-    let schema: Record<string, any> = {
-      name: [required(productForm.name, "Tên sản phẩm là bắt buộc")],
-      categoryId: [minNumber(productForm.categoryId, 1, "Danh mục là bắt buộc")],
-      warrantyMonths: [minNumber(productForm.warrantyMonths, 1, "Số tháng bảo hành phải lớn hơn 0")],
-    };
-    if (productForm.variants.length === 0) {
-      schema.variants = [{ valid: false, message: "Phải có ít nhất 1 phân loại" }];
-    } else {
-      for (let i = 0; i < productForm.variants.length; i++) {
-        schema[`variant_${i}_name`] = [required(productForm.variants[i].variantName, "Tên phân loại là bắt buộc")];
-      }
-    }
-    return runValidation(schema);
-  }
-
   async function submitProduct() {
     setHasSubmittedProduct(true);
     const validationErrors = validateProduct();
