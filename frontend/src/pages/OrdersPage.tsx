@@ -173,6 +173,7 @@ export function OrdersPage() {
       if (form.id) await orderService.update(payload);
       else await orderService.create(payload);
       setForm(emptyOrder);
+      setHasSubmitted(false);
       setIsModalOpen(false);
       await load();
     } catch (err) {

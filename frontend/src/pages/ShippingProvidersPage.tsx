@@ -71,6 +71,7 @@ export function ShippingProvidersPage() {
       if (form.id) await shippingService.update(form);
       else await shippingService.create(form);
       setForm(emptyForm);
+      setHasSubmitted(false);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

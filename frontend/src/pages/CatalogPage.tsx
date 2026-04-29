@@ -138,6 +138,7 @@ export function CatalogPage() {
       if (productForm.id) await catalogService.updateProduct(productForm);
       else await catalogService.createProduct(productForm);
       setProductForm(emptyProduct);
+      setHasSubmittedProduct(false);
       void loadProducts();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -159,6 +160,7 @@ export function CatalogPage() {
       if (categoryForm.id) await catalogService.updateCategory(categoryForm);
       else await catalogService.createCategory(categoryForm);
       setCategoryForm(emptyCategory);
+      setHasSubmittedCategory(false);
       void loadCategories();
       void loadCategoryOptions();
     } catch (err) {

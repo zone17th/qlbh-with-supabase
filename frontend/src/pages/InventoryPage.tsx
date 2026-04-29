@@ -189,6 +189,7 @@ export function InventoryPage() {
     try {
       await inventoryService.importStock(importForm);
       setImportForm(emptyImport);
+      setHasSubmittedImport(false);
       void loadSummary();
       if (page === 0) void loadTransactions(); else setPage(0);
     } catch (err) {
@@ -210,6 +211,7 @@ export function InventoryPage() {
     try {
       await inventoryService.exportStock(exportForm);
       setExportForm(emptyExport);
+      setHasSubmittedExport(false);
       void loadSummary();
       if (page === 0) void loadTransactions(); else setPage(0);
     } catch (err) {
