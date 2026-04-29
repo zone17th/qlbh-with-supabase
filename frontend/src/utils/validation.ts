@@ -20,3 +20,12 @@ export function positiveNumber(value: number, message: string): ValidationResult
 export function firstError(results: ValidationResult[]): string | null {
   return results.find((result) => !result.valid)?.message ?? null;
 }
+
+export function runValidation(schema: Record<string, ValidationResult[]>): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const [key, results] of Object.entries(schema)) {
+    const error = firstError(results);
+    if (error) errors[key] = error;
+  }
+  return errors;
+}

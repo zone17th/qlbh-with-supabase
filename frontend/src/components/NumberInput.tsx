@@ -2,7 +2,7 @@ import { NumericFormat } from 'react-number-format';
 
 interface Props {
   value: number | string;
-  onChange: (val: number) => void;
+  onChange: (val: any) => void;
   className?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -26,9 +26,10 @@ export function NumberInput({
   return (
     <NumericFormat
       value={value}
-      onValueChange={(values) => {
-        let val = values.floatValue ?? 0;
-        onChange(val);
+      onValueChange={(values, sourceInfo) => {
+        if (sourceInfo.source === 'event') {
+          onChange(values.floatValue !== undefined ? values.floatValue : ("" as any));
+        }
       }}
       thousandSeparator="."
       decimalSeparator=","

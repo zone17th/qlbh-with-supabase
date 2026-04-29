@@ -1,12 +1,12 @@
-import { Plus, Save, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Plus, Save, Trash2, Search, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { DataState } from "../components/DataState";
 import { NumberInput } from "../components/NumberInput";
 import { Pagination } from "../components/Pagination";
 import { catalogService } from "../services/catalogService";
 import type { Product, ProductCategory } from "../types/models";
 import type { CategoryForm, ProductForm } from "../types/forms";
-import { firstError, minNumber, required } from "../utils/validation";
+import { minNumber, required, runValidation } from "../utils/validation";
 
 const emptyProduct: ProductForm = {
   name: "",
@@ -35,6 +35,36 @@ export function CatalogPage() {
   const [productLoading, setProductLoading] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSubmittedProduct, setHasSubmittedProduct] = useState(false);
+  const [hasSubmittedCategory, setHasSubmittedCategory] = useState(false);
+
+  function validateProduct() {
+    let schema: Record<string, any> = {
+      name: [required(productForm.name, "Tên sản phẩm là bắt buộc")],
+      categoryId: [minNumber(productForm.categoryId, 1, "Danh mục là bắt buộc")],
+      warrantyMonths: [minNumber(productForm.warrantyMonths, 1, "Số tháng bảo hành phải lớn hơn 0")],
+    };
+    if (productForm.variants.length === 0) {
+      schema.variants = [{ valid: false, message: "Phải có ít nhất 1 phân loại" }];
+    } else {
+      for (let i = 0; i < productForm.variants.length; i++) {
+        schema[`variant_${i}_name`] = [required(productForm.variants[i].variantName, "Tên phân loại là bắt buộc")];
+      }
+    }
+    return runValidation(schema);
+  }
+
+  function validateCategory() {
+    return runValidation({
+      name: [required(categoryForm.name, "Tên danh mục là bắt buộc")],
+    });
+  }
+
+  const fieldErrors = useMemo(() => {
+    if (tab === "PRODUCT" && hasSubmittedProduct) return validateProduct();
+    if (tab === "CATEGORY" && hasSubmittedCategory) return validateCategory();
+    return {};
+  }, [tab, hasSubmittedProduct, hasSubmittedCategory, productForm, categoryForm]);
 
   async function loadCategoryOptions() {
     try {
@@ -88,20 +118,36 @@ export function CatalogPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productPage, categoryPage, tab]);
 
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   function validateProduct() {
-    return firstError([
-      required(productForm.name, "Tên sản phẩm là bắt buộc"),
-      minNumber(productForm.categoryId, 1, "Danh mục là bắt buộc"),
-      minNumber(productForm.warrantyMonths, 1, "Số tháng bảo hành phải lớn hơn 0"),
-      productForm.variants.length > 0 && productForm.variants.some((item) => item.variantName.trim())
-        ? { valid: true }
-        : { valid: false, message: "Phải có ít nhất 1 phân loại" },
-    ]);
+    let schema: Record<string, any> = {
+      name: [required(productForm.name, "Tên sản phẩm là bắt buộc")],
+      categoryId: [minNumber(productForm.categoryId, 1, "Danh mục là bắt buộc")],
+      warrantyMonths: [minNumber(productForm.warrantyMonths, 1, "Số tháng bảo hành phải lớn hơn 0")],
+    };
+    if (productForm.variants.length === 0) {
+      schema.variants = [{ valid: false, message: "Phải có ít nhất 1 phân loại" }];
+    } else {
+      for (let i = 0; i < productForm.variants.length; i++) {
+        schema[`variant_${i}_name`] = [required(productForm.variants[i].variantName, "Tên phân loại là bắt buộc")];
+      }
+    }
+    return runValidation(schema);
   }
 
   async function submitProduct() {
-    const validation = validateProduct();
-    if (validation) return setError(validation);
+    setHasSubmittedProduct(true);
+    const validationErrors = validateProduct();
+    if (Object.keys(validationErrors).length > 0) {
+      setError("Vui lòng kiểm tra lại thông tin");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -117,8 +163,12 @@ export function CatalogPage() {
   }
 
   async function submitCategory() {
-    const validation = firstError([required(categoryForm.name, "Tên danh mục là bắt buộc")]);
-    if (validation) return setError(validation);
+    setHasSubmittedCategory(true);
+    const validationErrors = validateCategory();
+    if (Object.keys(validationErrors).length > 0) {
+      setError("Vui lòng kiểm tra lại thông tin");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -191,7 +241,7 @@ export function CatalogPage() {
         <div className="flex p-1.5 bg-gray-100/50 m-4 rounded-xl border border-gray-200/50">
           <button
             type="button"
-            onClick={() => setTab("PRODUCT")}
+            onClick={() => { setTab("PRODUCT"); setHasSubmittedProduct(false); setHasSubmittedCategory(false); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-bold rounded-lg transition-all focus:outline-none ${
               tab === "PRODUCT"
                 ? "bg-white shadow-soft-sm text-blue-600"
@@ -202,7 +252,7 @@ export function CatalogPage() {
           </button>
           <button
             type="button"
-            onClick={() => setTab("CATEGORY")}
+            onClick={() => { setTab("CATEGORY"); setHasSubmittedProduct(false); setHasSubmittedCategory(false); }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-bold rounded-lg transition-all focus:outline-none ${
               tab === "CATEGORY"
                 ? "bg-white shadow-soft-sm text-blue-600"
@@ -233,21 +283,23 @@ export function CatalogPage() {
                           value={productForm.name}
                           onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                           placeholder="Nhập tên sản phẩm"
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px]"
+                          className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px] ${fieldErrors.name ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
                         />
+                        {fieldErrors.name && <div className="text-red-500 text-xs mt-1">{fieldErrors.name}</div>}
                       </div>
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-2 required-label">Danh mục</label>
                         <select
                           value={productForm.categoryId}
                           onChange={(e) => setProductForm({ ...productForm, categoryId: Number(e.target.value) })}
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px]"
+                          className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px] ${fieldErrors.categoryId ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
                         >
                           <option value={0}>Chọn danh mục</option>
                           {categoryOptions.map((cat) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                           ))}
                         </select>
+                        {fieldErrors.categoryId && <div className="text-red-500 text-xs mt-1">{fieldErrors.categoryId}</div>}
                       </div>
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-2 required-label">Bảo hành (tháng)</label>
@@ -256,8 +308,9 @@ export function CatalogPage() {
                           value={productForm.warrantyMonths}
                           onChange={(val) => setProductForm({ ...productForm, warrantyMonths: val })}
                           placeholder="Số tháng bảo hành"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px]"
+                          className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors h-[38px] ${fieldErrors.warrantyMonths ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
                         />
+                        {fieldErrors.warrantyMonths && <div className="text-red-500 text-xs mt-1">{fieldErrors.warrantyMonths}</div>}
                       </div>
                     </div>
 
@@ -279,9 +332,9 @@ export function CatalogPage() {
                         <button
                           type="button"
                           onClick={() => setProductForm({ ...productForm, variants: [...productForm.variants, { variantName: "" }] })}
-                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 transition-colors"
+                          className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-50 hover:border-blue-200 transition-colors"
                         >
-                          + Thêm phân loại
+                          <Plus size={14} /> Thêm phân loại
                         </button>
                       </div>
                       <div className="space-y-2 bg-gray-50 p-4 rounded-xl border border-gray-200/50">
@@ -291,27 +344,32 @@ export function CatalogPage() {
                             <div className="w-[34px]"></div>
                           </div>
                         )}
+                        {fieldErrors.variants && <div className="text-red-500 text-sm mb-2">{fieldErrors.variants}</div>}
                         {productForm.variants.map((variant, index) => (
-                          <div key={index} className="flex gap-2 items-center">
-                            <input
-                              type="text"
-                              value={variant.variantName}
-                              onChange={(e) => {
-                                const next = [...productForm.variants];
-                                next[index] = { ...variant, variantName: e.target.value };
-                                setProductForm({ ...productForm, variants: next });
-                              }}
-                              placeholder="Tên phân loại (vd: Đen, 256GB, ...)"
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
-                            />
-                            <button
-                              type="button"
-                              disabled={productForm.variants.length === 1}
-                              onClick={() => setProductForm({ ...productForm, variants: productForm.variants.filter((_, i) => i !== index) })}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded disabled:opacity-50 transition-colors"
-                            >
-                              🗑️
-                            </button>
+                          <div key={index} className="flex flex-col gap-1 mb-2">
+                            <div className="flex gap-2 items-start">
+                              <div className="flex-1">
+                                <input
+                                  type="text"
+                                  value={variant.variantName}
+                                  onChange={(e) => {
+                                    const next = [...productForm.variants];
+                                    next[index] = { ...variant, variantName: e.target.value };
+                                    setProductForm({ ...productForm, variants: next });
+                                  }}
+                                  placeholder="Nhập phân loại"
+                                  className={`w-full min-w-0 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors[`variant_${index}_name`] ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                                />
+                                {fieldErrors[`variant_${index}_name`] && <div className="text-red-500 text-[10px] mt-1">{fieldErrors[`variant_${index}_name`]}</div>}
+                              </div>
+                              <button
+                                type="button"
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200 shrink-0 mt-0.5"
+                                onClick={() => setProductForm({ ...productForm, variants: productForm.variants.filter((_, i) => i !== index) })}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -320,15 +378,15 @@ export function CatalogPage() {
                     <div className="flex gap-3 pt-4 border-t border-gray-100">
                       <button
                         onClick={() => void submitProduct()}
-                        className="px-6 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 disabled:bg-gray-400 transition-all shadow-soft-md"
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all shadow-md shadow-blue-500/20"
                       >
-                        {productForm.id ? "✓ Cập nhật sản phẩm" : "✓ Thêm sản phẩm"}
+                        <Save size={16} /> {productForm.id ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
                       </button>
                       <button
-                        onClick={() => setProductForm(emptyProduct)}
-                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
+                        onClick={() => { setProductForm(emptyProduct); setHasSubmittedProduct(false); setError(null); }}
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
                       >
-                        Làm mới
+                        <RefreshCw size={16} /> Làm mới
                       </button>
                     </div>
                   </div>
@@ -365,59 +423,61 @@ export function CatalogPage() {
                     <div className="flex gap-3 pt-3">
                       <button
                         onClick={() => { if (productPage === 0) void loadProducts(); else setProductPage(0); }}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 transition-colors"
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20"
                       >
-                        🔍 Tìm kiếm
+                        <Search size={16} /> Tìm kiếm
                       </button>
                       <button
                         onClick={() => { setKeyword(""); setFilterCategoryId(0); if (productPage === 0) void loadProducts(true); else setProductPage(0); }}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
+                        className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
                       >
-                        ↻ Làm mới
+                        <RefreshCw size={16} /> Làm mới
                       </button>
                     </div>
                   </div>
 
                   {/* Product Table */}
                   <DataState loading={productLoading}>
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Sản phẩm</th>
-                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Danh mục</th>
-                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Phân loại</th>
-                          <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Bảo hành</th>
-                          <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {products.map((product) => (
-                          <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-gray-900">{product.name}</div>
-                              {product.note && <div className="text-xs text-gray-500 italic">{product.note}</div>}
-                            </td>
-                            <td className="px-6 py-4 text-gray-600">{product.categoryName}</td>
-                            <td className="px-6 py-4">
-                              <div className="flex flex-wrap gap-1">
-                                {product.variants.map((v) => (
-                                  <span key={v.variantName} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs border border-blue-100">
-                                    {v.variantName}
-                                  </span>
-                                ))}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-center">{product.warrantyMonths} tháng</td>
-                            <td className="px-6 py-4 text-center">
-                              <div className="flex justify-center gap-2">
-                                <button onClick={() => editProduct(product)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
-                                <button onClick={() => void removeProduct(product.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">🗑️</button>
-                              </div>
-                            </td>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm min-w-[600px]">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Sản phẩm</th>
+                            <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Danh mục</th>
+                            <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Phân loại</th>
+                            <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Bảo hành</th>
+                            <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {products.map((product) => (
+                            <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="font-bold text-gray-900">{product.name}</div>
+                                {product.note && <div className="text-xs text-gray-500 italic">{product.note}</div>}
+                              </td>
+                              <td className="px-6 py-4 text-gray-600">{product.categoryName}</td>
+                              <td className="px-6 py-4">
+                                <div className="flex flex-wrap gap-1">
+                                  {product.variants.map((v) => (
+                                    <span key={v.variantName} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs border border-blue-100">
+                                      {v.variantName}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-center">{product.warrantyMonths} tháng</td>
+                              <td className="px-6 py-4 text-center">
+                                <div className="flex justify-center gap-2">
+                                  <button onClick={() => editProduct(product)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
+                                  <button onClick={() => void removeProduct(product.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"><Trash2 size={16} /></button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </DataState>
 
                   {/* Pagination */}
@@ -460,9 +520,10 @@ export function CatalogPage() {
                           type="text"
                           value={categoryForm.name}
                           onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                          placeholder="Nhập tên danh mục (vd: Điện thoại, Laptop...)"
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                          placeholder="Nhập tên danh mục..."
+                          className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors.name ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
                         />
+                        {fieldErrors.name && <div className="text-red-500 text-xs mt-1">{fieldErrors.name}</div>}
                       </div>
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-2">Mô tả</label>
@@ -478,15 +539,15 @@ export function CatalogPage() {
                     <div className="flex gap-3 pt-4 border-t border-gray-100">
                       <button
                         onClick={() => void submitCategory()}
-                        className="px-6 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 disabled:bg-gray-400 transition-all shadow-soft-md"
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all shadow-md shadow-blue-500/20"
                       >
-                        {categoryForm.id ? "✓ Cập nhật danh mục" : "✓ Thêm danh mục"}
+                        <Save size={16} /> {categoryForm.id ? "Cập nhật danh mục" : "Thêm danh mục"}
                       </button>
                       <button
-                        onClick={() => setCategoryForm(emptyCategory)}
-                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
+                        onClick={() => { setCategoryForm(emptyCategory); setHasSubmittedCategory(false); setError(null); }}
+                        className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all"
                       >
-                        Làm mới
+                        <RefreshCw size={16} /> Làm mới
                       </button>
                     </div>
                   </div>
@@ -495,29 +556,31 @@ export function CatalogPage() {
                 {/* Category Table */}
                 <DataState loading={categoryLoading}>
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-soft-sm">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Tên danh mục</th>
-                        <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Mô tả</th>
-                        <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {categories.map((cat) => (
-                        <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 font-bold text-gray-900">{cat.name}</td>
-                          <td className="px-6 py-4 text-gray-600">{cat.description || "-"}</td>
-                          <td className="px-6 py-4 text-center">
-                            <div className="flex justify-center gap-2">
-                              <button onClick={() => editCategory(cat)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
-                              <button onClick={() => void removeCategory(cat.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">🗑️</button>
-                            </div>
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[500px]">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Tên danh mục</th>
+                          <th className="px-6 py-3 text-left font-bold text-gray-700 uppercase tracking-wider">Mô tả</th>
+                          <th className="px-6 py-3 text-center font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {categories.map((cat) => (
+                          <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4 font-bold text-gray-900">{cat.name}</td>
+                            <td className="px-6 py-4 text-gray-600">{cat.description || "-"}</td>
+                            <td className="px-6 py-4 text-center">
+                              <div className="flex justify-center gap-2">
+                                <button onClick={() => editCategory(cat)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
+                                <button onClick={() => void removeCategory(cat.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"><Trash2 size={16} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <div className="px-6 py-4 border-t border-gray-100 flex justify-center gap-4 bg-gray-50/50">
                     <button
                       onClick={() => setCategoryPage(Math.max(0, categoryPage - 1))}

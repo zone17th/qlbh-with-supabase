@@ -1,10 +1,11 @@
+import { Trash2, Search, Save, RefreshCw, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DataState } from "../components/DataState";
 import { Pagination } from "../components/Pagination";
 import { shippingService } from "../services/shippingService";
 import type { ShippingProvider } from "../types/models";
 import type { ShippingProviderForm } from "../types/forms";
-import { firstError, required } from "../utils/validation";
+import { required, runValidation } from "../utils/validation";
 
 const emptyForm: ShippingProviderForm = {
   providerName: "",
@@ -19,6 +20,25 @@ export function ShippingProvidersPage() {
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  function validate() {
+    let schema: Record<string, any> = {
+      providerName: [required(form.providerName, "Tên đơn vị giao hàng là bắt buộc")],
+    };
+    if (form.shippers.length === 0) {
+      schema.shippers = [{ valid: false, message: "Phải có ít nhất 1 shipper hợp lệ" }];
+    } else {
+      for (let i = 0; i < form.shippers.length; i++) {
+        const shipper = form.shippers[i];
+        schema[`shipper_${i}_name`] = [required(shipper.shipperName, "Tên shipper là bắt buộc")];
+        schema[`shipper_${i}_phone`] = [required(shipper.shipperPhone, "SĐT là bắt buộc")];
+      }
+    }
+    return runValidation(schema);
+  }
+
+  const fieldErrors = hasSubmitted ? validate() : {};
 
   async function load() {
     setLoading(true);
@@ -39,13 +59,12 @@ export function ShippingProvidersPage() {
   }, [page]);
 
   async function submit() {
-    const validation = firstError([
-      required(form.providerName, "Tên đơn vị giao hàng là bắt buộc"),
-      form.shippers.some((shipper) => shipper.shipperName.trim() && shipper.shipperPhone.trim())
-        ? { valid: true }
-        : { valid: false, message: "Phải có ít nhất 1 shipper hợp lệ" },
-    ]);
-    if (validation) return setError(validation);
+    setHasSubmitted(true);
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setError("Vui lòng kiểm tra lại thông tin");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -104,8 +123,8 @@ export function ShippingProvidersPage() {
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button onClick={() => void load()} className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
-            🔍 Tìm kiếm
+          <button onClick={() => void load()} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20 whitespace-nowrap">
+            <Search size={16} /> Tìm kiếm
           </button>
         </div>
       </div>
@@ -128,8 +147,9 @@ export function ShippingProvidersPage() {
                   value={form.providerName}
                   onChange={(e) => setForm({ ...form, providerName: e.target.value })}
                   placeholder="Nhập tên đơn vị giao hàng..."
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
+                  className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors.providerName ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
                 />
+                {fieldErrors.providerName && <div className="text-red-500 text-xs mt-1">{fieldErrors.providerName}</div>}
               </div>
 
               <div className="space-y-3">
@@ -137,9 +157,9 @@ export function ShippingProvidersPage() {
                   <label className="text-sm font-medium text-gray-700 required-label">Shipper</label>
                   <button
                     onClick={() => setForm({ ...form, shippers: [...form.shippers, { shipperName: "", shipperPhone: "" }] })}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-50 hover:border-blue-200 transition-colors"
                   >
-                    + Thêm shipper
+                    <Plus size={14} /> Thêm shipper
                   </button>
                 </div>
                 <div className="space-y-2 bg-gray-50 p-4 rounded-xl border border-gray-200/50">
@@ -150,38 +170,46 @@ export function ShippingProvidersPage() {
                       <div className="w-[34px]"></div>
                     </div>
                   )}
+                  {fieldErrors.shippers && <div className="text-red-500 text-sm mb-2">{fieldErrors.shippers}</div>}
                   {form.shippers.map((shipper, index) => (
-                    <div key={index} className="flex gap-2 items-center">
-                      <input
-                        placeholder="Tên shipper"
-                        value={shipper.shipperName}
-                        onChange={(e) => { const next = [...form.shippers]; next[index] = { ...shipper, shipperName: e.target.value }; setForm({ ...form, shippers: next }); }}
-                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
-                      />
-                      <input
-                        placeholder="Số điện thoại"
-                        value={shipper.shipperPhone}
-                        onChange={(e) => { const next = [...form.shippers]; next[index] = { ...shipper, shipperPhone: e.target.value }; setForm({ ...form, shippers: next }); }}
-                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px]"
-                      />
-                      <button
-                        className="p-2 text-red-600 hover:bg-red-50 rounded disabled:opacity-50 transition-colors"
-                        disabled={form.shippers.length === 1}
-                        onClick={() => setForm({ ...form, shippers: form.shippers.filter((_, i) => i !== index) })}
-                      >
-                        🗑️
-                      </button>
+                    <div key={index} className="flex flex-col gap-1 mb-2">
+                      <div className="flex gap-2 items-start">
+                        <div className="flex-1">
+                          <input
+                            placeholder="Tên shipper"
+                            value={shipper.shipperName}
+                            onChange={(e) => { const next = [...form.shippers]; next[index] = { ...shipper, shipperName: e.target.value }; setForm({ ...form, shippers: next }); }}
+                            className={`w-full min-w-0 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors[`shipper_${index}_name`] ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                          />
+                          {fieldErrors[`shipper_${index}_name`] && <div className="text-red-500 text-[10px] mt-1">{fieldErrors[`shipper_${index}_name`]}</div>}
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            placeholder="Số điện thoại"
+                            value={shipper.shipperPhone}
+                            onChange={(e) => { const next = [...form.shippers]; next[index] = { ...shipper, shipperPhone: e.target.value }; setForm({ ...form, shippers: next }); }}
+                            className={`w-full min-w-0 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-[38px] ${fieldErrors[`shipper_${index}_phone`] ? "border-red-400 focus:ring-red-500" : "border-gray-300"}`}
+                          />
+                          {fieldErrors[`shipper_${index}_phone`] && <div className="text-red-500 text-[10px] mt-1">{fieldErrors[`shipper_${index}_phone`]}</div>}
+                        </div>
+                        <button
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200 shrink-0 mt-0.5"
+                          onClick={() => setForm({ ...form, shippers: form.shippers.filter((_, i) => i !== index) })}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-100">
-                <button onClick={() => void submit()} className="flex-1 sm:flex-none px-6 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition-all shadow-soft-md whitespace-nowrap">
-                  {form.id ? "✓ Cập nhật đơn vị" : "✓ Tạo đơn vị"}
+                <button onClick={() => void submit()} className="flex items-center justify-center gap-2 flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-500/20 whitespace-nowrap">
+                  <Save size={16} /> {form.id ? "Cập nhật đơn vị" : "Tạo đơn vị"}
                 </button>
-                <button onClick={() => setForm(emptyForm)} className="flex-1 sm:flex-none px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all whitespace-nowrap">
-                  Làm mới
+                <button onClick={() => setForm(emptyForm)} className="flex items-center justify-center gap-2 flex-1 sm:flex-none px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-bold text-sm hover:bg-gray-200 transition-all whitespace-nowrap">
+                  <RefreshCw size={16} /> Làm mới
                 </button>
               </div>
             </div>
@@ -213,7 +241,7 @@ export function ShippingProvidersPage() {
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-2">
                         <button onClick={() => edit(provider)} className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors">✏️</button>
-                        <button onClick={() => void remove(provider.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">🗑️</button>
+                        <button onClick={() => void remove(provider.id)} className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"><Trash2 size={16} /></button>
                       </div>
                     </td>
                   </tr>
