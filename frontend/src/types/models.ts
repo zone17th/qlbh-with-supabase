@@ -161,6 +161,17 @@ export interface Order {
   shippingHistory: OrderHistory[];
 }
 
+export interface DailyStat {
+  date: string;
+  revenue: number;
+  cost: number;
+  profit: number;
+  orderCount: number;
+  shippedOrders: number;
+  importedQuantity: number;
+  exportedQuantity: number;
+}
+
 export interface BusinessSummary {
   totalRevenue: number;
   totalCost: number;
@@ -170,16 +181,7 @@ export interface BusinessSummary {
   cancelledOrders: number;
   paymentPendingOrders: number;
   pendingShippingOrders: number;
-  dailyStatistics: Array<{
-    date: string;
-    revenue: number;
-    cost: number;
-    profit: number;
-    orderCount: number;
-    shippedOrders: number;
-    importedQuantity: number;
-    exportedQuantity: number;
-  }>;
+  dailyStatistics: DailyStat[];
   categoryRevenues: Array<{ categoryName: string; revenue: number }>;
 }
 

@@ -38,6 +38,7 @@ import {
 import { daysAgoIsoDate, todayIsoDate } from "../utils/date";
 import { formatMoney, formatNumber } from "../utils/format";
 import { useDashboardSummary } from "../hooks/useDashboardSummary";
+import { DailyStat } from "../types/models";
 
 const CHART_COLORS = [
   "#3b82f6",
@@ -76,7 +77,7 @@ export function DashboardPage() {
   /* derived data for charts */
   const rawDailyData = summary?.dailyStatistics ?? [];
 
-  const getCompressedData = (fields: string[]) => {
+  const getCompressedData = (fields: (keyof DailyStat)[]) => {
     const keptIndices: number[] = [];
     for (let i = 0; i < rawDailyData.length; i++) {
       if (i === 0 || i === rawDailyData.length - 1) {
@@ -102,6 +103,7 @@ export function DashboardPage() {
           cost: prevData.cost,
           profit: prevData.profit,
           orderCount: prevData.orderCount,
+          shippedOrders: prevData.shippedOrders,
           isGap: true
         });
       }
@@ -458,6 +460,7 @@ function DailyStatsChart({
     profit: number;
     orderCount: number;
     shippedOrders: number;
+    isGap?: boolean;
   }>;
 }) {
   const [view, setView] = useState<"chart" | "table">("chart");
