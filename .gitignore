@@ -9,4 +9,12 @@ frontend/dist/
 frontend/*.tsbuildinfo
 frontend/vite.config.js
 frontend/vite.config.d.ts
+
+andr-app/.env.local
+andr-app/node_modules/
+andr-app/dist/
+andr-app/*.tsbuildinfo
+andr-app/vite.config.js
+andr-app/vite.config.d.ts
+
 .supabase/
