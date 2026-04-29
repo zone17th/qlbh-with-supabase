@@ -17,7 +17,7 @@ export function AppLayout({ activePath, children }: Props) {
   return (
     <div className="min-h-screen bg-canvas flex flex-col font-sans text-ink">
       {/* ── Fixed Header (Common for both PC and Mobile) ── */}
-      <header className="fixed top-0 left-0 right-0 h-[60px] md:h-[72px] bg-white border-b border-divider shadow-sm z-50 flex items-center justify-between px-4 md:px-6 transition-all duration-200">
+      <header className="fixed top-0 left-0 right-0 h-[calc(60px+env(safe-area-inset-top))] md:h-[72px] pt-safe bg-white border-b border-divider shadow-sm z-50 flex items-center justify-between px-4 md:px-6 transition-all duration-200">
         <div className="flex items-center gap-3">
           <LogoIcon size={36} className="md:w-10 md:h-10 shrink-0 drop-shadow-md" />
           <div>
@@ -36,7 +36,7 @@ export function AppLayout({ activePath, children }: Props) {
         </div>
       </header>
 
-      <div className="flex flex-1 pt-[60px] md:pt-[72px] pb-[70px] md:pb-0">
+      <div className="flex flex-1 pt-[calc(60px+env(safe-area-inset-top))] md:pt-[72px] pb-[70px] md:pb-0">
         {/* ── Fixed Sidebar (PC Only) ── */}
         <aside className="hidden md:flex flex-col w-[256px] fixed left-0 top-[72px] bottom-0 bg-white border-r border-divider z-40">
           <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5">
