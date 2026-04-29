@@ -74,10 +74,46 @@ export function DashboardPage() {
   }
 
   /* derived data for charts */
-  const dailyChartData = (summary?.dailyStatistics ?? []).map((d) => ({
-    ...d,
-    shortDate: d.date.slice(5), // "MM-DD"
-  }));
+  const rawDailyData = summary?.dailyStatistics ?? [];
+
+  const getCompressedData = (fields: string[]) => {
+    const keptIndices: number[] = [];
+    for (let i = 0; i < rawDailyData.length; i++) {
+      if (i === 0 || i === rawDailyData.length - 1) {
+        keptIndices.push(i);
+        continue;
+      }
+      const curr = rawDailyData[i];
+      const prev = rawDailyData[i - 1];
+      const next = rawDailyData[i + 1];
+      const isChanged = fields.some(f => curr[f] !== prev[f] || curr[f] !== next[f]);
+      if (isChanged) keptIndices.push(i);
+    }
+
+    const result: any[] = [];
+    for (let j = 0; j < keptIndices.length; j++) {
+      const currIdx = keptIndices[j];
+      if (j > 0 && currIdx - keptIndices[j-1] > 1) {
+        const prevData = rawDailyData[keptIndices[j-1]];
+        result.push({
+          date: `gap-${j}`,
+          shortDate: "---",
+          revenue: prevData.revenue,
+          cost: prevData.cost,
+          profit: prevData.profit,
+          orderCount: prevData.orderCount,
+          isGap: true
+        });
+      }
+      const d = rawDailyData[currIdx];
+      const [y, m, day] = d.date.split("-");
+      result.push({ ...d, shortDate: `${day}/${m}` });
+    }
+    return result;
+  };
+
+  const chartDataArea = getCompressedData(["revenue", "profit"]);
+  const chartDataDetail = getCompressedData(["revenue", "cost", "profit", "orderCount"]);
 
   const categoryChartData = (summary?.categoryRevenues ?? []).map((c, i) => ({
     name: c.categoryName,
@@ -243,7 +279,7 @@ export function DashboardPage() {
               </div>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dailyChartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                  <AreaChart data={chartDataArea} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gRevenue" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
@@ -259,8 +295,14 @@ export function DashboardPage() {
                     <YAxis tickFormatter={shortMoney} tick={{ fontSize: 11 }} stroke="#94a3b8" axisLine={false} tickLine={false} />
                     <Tooltip
                       contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 4px 16px rgba(0,0,0,.08)" }}
-                      formatter={(v, name) => [formatMoney(Number(v)), String(name) === "revenue" ? "Doanh thu" : "Lợi nhuận"]}
-                      labelFormatter={(l) => `Ngày ${l}`}
+                      formatter={(v, name, props) => {
+                        if (props.payload.isGap) return [null, null];
+                        return [formatMoney(Number(v)), String(name) === "revenue" ? "Doanh thu" : "Lợi nhuận"];
+                      }}
+                      labelFormatter={(l, items) => {
+                        if (items[0]?.payload?.isGap) return "Giai đoạn ổn định (đã rút gọn)";
+                        return `Ngày ${l}`;
+                      }}
                     />
                     <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2.5} fill="url(#gRevenue)" dot={false} activeDot={{ r: 5, fill: "#3b82f6" }} />
                     <Area type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} fill="url(#gProfit)" dot={false} activeDot={{ r: 4, fill: "#10b981" }} />
@@ -397,7 +439,7 @@ export function DashboardPage() {
           </div>
 
           {/* ═══ Daily Statistics Chart ═══ */}
-          <DailyStatsChart dailyChartData={dailyChartData} />
+          <DailyStatsChart dailyChartData={chartDataDetail} />
         </>
       )}
     </div>
@@ -526,7 +568,8 @@ function DailyStatsChart({
                         boxShadow: "0 4px 16px rgba(0,0,0,.08)",
                         fontSize: 12,
                       }}
-                      formatter={(v: unknown, name: unknown) => {
+                      formatter={(v: unknown, name: unknown, props: any) => {
+                        if (props.payload.isGap) return [null, null];
                         const labels: Record<string, string> = {
                           revenue: "Doanh thu",
                           cost: "Chi phí",
@@ -541,7 +584,10 @@ function DailyStatsChart({
                           labels[n] ?? n,
                         ];
                       }}
-                      labelFormatter={(l) => `Ngày ${l}`}
+                      labelFormatter={(l, items) => {
+                        if (items[0]?.payload?.isGap) return "Giai đoạn ổn định (đã rút gọn)";
+                        return `Ngày ${l}`;
+                      }}
                     />
                     <Bar
                       yAxisId="money"
@@ -601,18 +647,26 @@ function DailyStatsChart({
             </thead>
             <tbody className="divide-y divide-divider">
               {dailyChartData.map((row) => (
-                <tr key={row.date} className="hover:bg-brand-50/40 transition-colors">
-                  <td className="px-6 py-3.5 font-medium text-ink">{row.date}</td>
-                  <td className="px-6 py-3.5 text-right text-ink/80">{formatMoney(row.revenue)}</td>
-                  <td className="px-6 py-3.5 text-right text-muted">{formatMoney(row.cost)}</td>
-                  <td className="px-6 py-3.5 text-right">
-                    <span className={row.profit >= 0 ? "text-emerald-600 font-semibold" : "text-red-600 font-semibold"}>
-                      {formatMoney(row.profit)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3.5 text-center text-ink/80">{row.orderCount}</td>
-                  <td className="px-6 py-3.5 text-center text-ink/80">{row.shippedOrders}</td>
-                </tr>
+                row.isGap ? (
+                  <tr key={row.date} className="bg-canvas/50">
+                    <td colSpan={6} className="px-6 py-2 text-center text-xs text-disabled font-medium italic tracking-widest bg-canvas/30">
+                      ••• Giai đoạn không có biến động dữ liệu •••
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={row.date} className="hover:bg-brand-50/40 transition-colors">
+                    <td className="px-6 py-3.5 font-medium text-ink">{row.date}</td>
+                    <td className="px-6 py-3.5 text-right text-ink/80">{formatMoney(row.revenue)}</td>
+                    <td className="px-6 py-3.5 text-right text-muted">{formatMoney(row.cost)}</td>
+                    <td className="px-6 py-3.5 text-right">
+                      <span className={row.profit >= 0 ? "text-emerald-600 font-semibold" : "text-red-600 font-semibold"}>
+                        {formatMoney(row.profit)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3.5 text-center text-ink/80">{row.orderCount}</td>
+                    <td className="px-6 py-3.5 text-center text-ink/80">{row.shippedOrders}</td>
+                  </tr>
+                )
               ))}
               {dailyChartData.length === 0 && (
                 <tr>
